@@ -1,42 +1,29 @@
 <template>
   <div class="header">
     <div class="header-left">
-      <el-icon
-        class="menu-toggle"
-        @click="$emit('toggle-sidebar')"
-      >
-        <Fold v-if="!collapsed" />
-        <Expand v-else />
-      </el-icon>
-      <el-breadcrumb class="header-breadcrumb" separator="/">
-        <el-breadcrumb-item
-          v-for="(item, index) in breadcrumbItems"
-          :key="index"
-          :to="item.to"
-        >
-          {{ item.label }}
-        </el-breadcrumb-item>
-      </el-breadcrumb>
-    </div>
-
-    <div class="header-center">
-      <span class="system-title">SVS电子签章服务器</span>
+      <div class="logo-wrap">
+        <div class="logo-icon">
+          <span class="logo-shape shape-1" />
+          <span class="logo-shape shape-2" />
+          <span class="logo-shape shape-3" />
+        </div>
+      </div>
+      <span class="system-title">签名验签服务器</span>
+      <span class="system-version">1.8.0</span>
     </div>
 
     <div class="header-right">
-      <el-tooltip content="全屏" placement="bottom">
-        <el-icon class="header-icon" @click="toggleFullscreen">
-          <FullScreen />
-        </el-icon>
-      </el-tooltip>
-
+      <div class="fullscreen-btn" @click="toggleFullscreen">
+        <el-icon><FullScreen /></el-icon>
+        <span>全屏</span>
+      </div>
       <el-dropdown trigger="click">
         <div class="user-info">
-          <el-avatar :size="32" class="user-avatar">
+          <el-avatar :size="28" class="user-avatar">
             <el-icon><User /></el-icon>
           </el-avatar>
-          <span class="username">svssysadmin</span>
-          <el-icon><ArrowDown /></el-icon>
+          <span class="username">sys_admin</span>
+          <el-icon class="arrow-icon"><ArrowDown /></el-icon>
         </div>
         <template #dropdown>
           <el-dropdown-menu>
@@ -60,13 +47,7 @@
 </template>
 
 <script setup>
-import { Fold, Expand, FullScreen, User, ArrowDown, Lock, SwitchButton } from '@element-plus/icons-vue'
-import { breadcrumbItems } from '@/composables/pageBreadcrumb'
-
-defineProps({
-  collapsed: Boolean
-})
-defineEmits(['toggle-sidebar'])
+import { FullScreen, User, ArrowDown, Lock, SwitchButton } from '@element-plus/icons-vue'
 
 const toggleFullscreen = () => {
   if (!document.fullscreenElement) {
@@ -86,75 +67,93 @@ const toggleFullscreen = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  position: relative;
-  z-index: 10;
+  padding: 0 20px;
+  flex-shrink: 0;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex: 1;
+  gap: 10px;
   min-width: 0;
-  margin-right: 16px;
 }
 
-.menu-toggle {
-  font-size: 20px;
-  cursor: pointer;
-  color: $text-secondary;
-
-  &:hover {
-    color: $primary-color;
-  }
+.logo-wrap {
+  flex-shrink: 0;
 }
 
-.header-breadcrumb {
-  flex: 1;
-  min-width: 0;
-  font-size: $font-size-base;
-
-  :deep(.el-breadcrumb__inner) {
-    color: $text-primary;
-    font-weight: 400;
-  }
-
-  :deep(.el-breadcrumb__inner.is-link:hover) {
-    color: $primary-color;
-  }
-
-  :deep(.el-breadcrumb__separator) {
-    color: $text-secondary;
-  }
+.logo-icon {
+  position: relative;
+  width: 28px;
+  height: 28px;
 }
 
-.header-center {
+.logo-shape {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+
+  &.shape-1 {
+    width: 14px;
+    height: 14px;
+    top: 2px;
+    left: 0;
+    opacity: 0.95;
+  }
+
+  &.shape-2 {
+    width: 12px;
+    height: 12px;
+    top: 8px;
+    left: 10px;
+    opacity: 0.75;
+  }
+
+  &.shape-3 {
+    width: 10px;
+    height: 10px;
+    top: 14px;
+    left: 4px;
+    opacity: 0.6;
+  }
 }
 
 .system-title {
   font-size: $font-size-lg;
-  font-weight: bold;
-  color: $text-primary;
+  font-weight: 600;
+  color: $text-white;
+  white-space: nowrap;
+}
+
+.system-version {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.75);
+  margin-left: 2px;
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
 }
 
-.header-icon {
-  font-size: 18px;
+.fullscreen-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   cursor: pointer;
-  color: $text-secondary;
+  color: $text-white;
+  font-size: $font-size-base;
+  padding: 4px 8px;
+  border-radius: $border-radius;
+  transition: background $transition-duration;
+
+  .el-icon {
+    font-size: 16px;
+  }
 
   &:hover {
-    color: $primary-color;
+    background: rgba(255, 255, 255, 0.12);
   }
 }
 
@@ -165,18 +164,25 @@ const toggleFullscreen = () => {
   cursor: pointer;
   padding: 4px 8px;
   border-radius: $border-radius;
+  transition: background $transition-duration;
 
   &:hover {
-    background: #f5f5f5;
+    background: rgba(255, 255, 255, 0.12);
   }
 }
 
 .user-avatar {
-  background: $primary-color;
+  background: rgba(255, 255, 255, 0.25);
+  color: $text-white;
 }
 
 .username {
-  color: $text-primary;
+  color: $text-white;
   font-size: $font-size-base;
+}
+
+.arrow-icon {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
 }
 </style>

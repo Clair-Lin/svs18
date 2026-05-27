@@ -17,6 +17,11 @@
             <el-option label="全部" value="" />
             <el-option label="SM2" value="SM2" />
             <el-option label="RSA" value="RSA" />
+            <el-option label="SM9" value="SM9" />
+            <el-option label="ML-DSA" value="ML-DSA" />
+            <el-option label="SLH-DSA-SHA2" value="SLH-DSA-SHA2" />
+            <el-option label="AIGIS-SIG" value="AIGIS-SIG" />
+            <el-option label="LMS-SM3" value="LMS-SM3" />
             <el-option label="SM4" value="SM4" />
             <el-option label="3DES" value="3DES" />
             <el-option label="AES" value="AES" />
@@ -28,6 +33,7 @@
             <el-option label="全部" value="" />
             <el-option label="签名验签" value="签名验签" />
             <el-option label="加密解密" value="加密解密" />
+            <el-option label="SM9短签名" value="SM9短签名" />
           </el-select>
         </div>
         <div class="filter-item filter-item--range">
@@ -50,16 +56,17 @@
     </div>
 
     <div class="action-bar">
-      <el-button type="primary" @click="handleCreate">生成密钥 <el-tag type="danger" effect="dark" size="small" style="margin-left: 6px;">新</el-tag></el-button>
+      <el-button type="primary" @click="handleCreate">生成密钥  <el-tag type="danger" effect="dark" size="small" style="margin-left: 6px;">新</el-tag></el-button>
       <el-button @click="handleRecover">恢复密钥</el-button>
     </div>
 
     <el-table :data="pagedKeyList" border stripe>
       <el-table-column prop="index" label="密钥索引" width="100" align="center" />
       <el-table-column prop="keyId" label="密钥ID" min-width="160" show-overflow-tooltip />
-      <el-table-column prop="keyAlgorithm" label="密钥算法" width="120" />
-      <el-table-column prop="keyUsage" label="密钥用途" width="120" />
-      <el-table-column prop="keyLength" label="密钥长度" width="100" align="center" />
+      <el-table-column prop="keyAlgorithm" label="密钥算法" width="100" />
+      <el-table-column prop="keyType" label="密钥类型" width="140" show-overflow-tooltip />
+      <el-table-column prop="keyUsage" label="密钥用途" min-width="140" show-overflow-tooltip />
+      <el-table-column prop="keyLength" label="密钥长度" width="120" align="center" show-overflow-tooltip />
       <el-table-column prop="addedTime" label="添加时间" width="180" />
       <el-table-column label="操作" fixed="right" width="320">
         <template #default="{ row }">
@@ -90,43 +97,191 @@
       width="560px"
       :close-on-click-modal="false"
     >
-      <el-form ref="formRef" :model="keyForm" :rules="keyRules" label-width="120px">
-        <el-form-item label="密钥算法" prop="algorithm">
-          <el-select v-model="keyForm.algorithm" style="width: 100%" @change="handleAlgorithmChange">
-            <el-option label="SM2" value="SM2" />
-            <el-option label="RSA" value="RSA" />
-            <el-option label="SM4" value="SM4" />
-            <el-option label="3DES" value="3DES" />
-            <el-option label="AES" value="AES" />
+      <el-form
+        ref="formRef"
+        :model="keyForm"
+        :rules="formRules"
+        label-width="140px"
+        :validate-on-rule-change="false"
+      >
+        <el-form-item prop="keyType">
+          <template #label>
+            <span class="form-label-with-tag">
+              密钥类型
+              <el-tag type="danger" effect="dark" size="small">新</el-tag>
+            </span>
+          </template>
+          <el-select
+            v-model="keyForm.keyType"
+            class="key-type-group-select"
+            style="width: 100%"
+            @change="handleKeyTypeChange"
+          >
+            <el-option-group
+              v-for="group in KEY_TYPE_GROUPS"
+              :key="group.label"
+              :label="group.label"
+            >
+              <el-option
+                v-for="opt in group.options"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-option-group>
           </el-select>
         </el-form-item>
-        <el-form-item label="密钥用途" prop="usage">
-          <el-checkbox-group v-model="keyForm.usage">
-            <el-checkbox label="签名验签" :disabled="isSymmetricKeyAlgorithm">
-              签名验签
-            </el-checkbox>
-            <el-checkbox label="加密解密">加密解密</el-checkbox>
-          </el-checkbox-group>
-        </el-form-item>
-        <el-form-item label="密钥长度" prop="keySize">
-          <el-select v-model="keyForm.keySize" style="width: 100%">
-            <el-option
-              v-for="size in availableSizes"
-              :key="size"
-              :label="String(size)"
-              :value="size"
+
+        <template v-if="isIbcKeyType" :key="`ibc-${keyForm.keyType}`">
+          <el-form-item label="密钥用途" prop="usage">
+            <el-checkbox-group v-model="keyForm.usage">
+              <el-checkbox :label="SM9_KEY_USAGE">{{ SM9_KEY_USAGE }}</el-checkbox>
+            </el-checkbox-group>
+          </el-form-item>
+
+          <!-- SM9主密钥 -->
+          <template v-if="isSm9MasterKey">
+            <el-form-item prop="keySize">
+              <template #label>
+                <span class="form-label-with-tip">
+                  密钥长度
+                </span>
+              </template>
+              <el-select v-model="keyForm.keySize" style="width: 100%">
+                <el-option label="256" :value="256" />
+              </el-select>
+            </el-form-item>
+            <el-form-item prop="paramDomain">
+              <template #label>
+                <span class="form-label-with-tip">
+                  参数域名
+                  <el-tooltip
+                    content="参数域名在系统内唯一，不作为用户 Identity 使用"
+                    placement="top"
+                  >
+                    <el-icon class="field-tip-icon"><QuestionFilled /></el-icon>
+                  </el-tooltip>
+                </span>
+              </template>
+              <el-input v-model="keyForm.paramDomain" clearable placeholder="请输入参数域名" />
+            </el-form-item>
+            <el-form-item label="参数版本" prop="paramVersion">
+              <el-input v-model="keyForm.paramVersion" clearable placeholder="请输入参数版本" />
+            </el-form-item>
+          </template>
+
+          <!-- SM9标识密钥 -->
+          <template v-if="isSm9IdentityKey">
+            <el-form-item label="私钥标识" prop="privateKeyIdentity">
+              <el-input
+                v-model="keyForm.privateKeyIdentity"
+                clearable
+                placeholder="请输入私钥标识"
+              />
+            </el-form-item>
+            <el-form-item label="主密钥" prop="masterKeyRef">
+              <el-select
+                v-model="keyForm.masterKeyRef"
+                style="width: 100%"
+                placeholder="请选择主密钥"
+                clearable
+              >
+                <el-option
+                  v-for="mk in sm9MasterKeyOptions"
+                  :key="mk.keyId"
+                  :label="mk.paramDomain"
+                  :value="mk.keyId"
+                />
+              </el-select>
+            </el-form-item>
+          </template>
+
+          <!-- SM9分片主密钥 -->
+          <template v-if="isSm9ShardMasterKey">
+            <el-form-item label="主密钥" prop="masterKeyRef">
+              <el-select
+                v-model="keyForm.masterKeyRef"
+                style="width: 100%"
+                placeholder="请选择主密钥"
+                clearable
+              >
+                <el-option
+                  v-for="mk in sm9MasterKeyOptions"
+                  :key="mk.keyId"
+                  :label="mk.paramDomain"
+                  :value="mk.keyId"
+                />
+              </el-select>
+            </el-form-item>
+          </template>
+
+          <el-form-item label="密钥访问口令" prop="password">
+            <el-input
+              v-model="keyForm.password"
+              type="password"
+              placeholder="请输入密钥访问口令"
+              show-password
+              autocomplete="new-password"
             />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="密钥访问口令" prop="password">
-          <el-input
-            v-model="keyForm.password"
-            type="password"
-            placeholder="请输入密钥访问口令"
-            show-password
-            autocomplete="new-password"
-          />
-        </el-form-item>
+          </el-form-item>
+        </template>
+
+        <template v-else-if="isPqcKeyType" :key="`pqc-${keyForm.keyType}`">
+          <el-form-item label="密钥用途" prop="usage">
+            <el-checkbox-group v-model="keyForm.usage">
+              <el-checkbox :label="PQC_KEY_USAGE">{{ PQC_KEY_USAGE }}</el-checkbox>
+            </el-checkbox-group>
+          </el-form-item>
+          <el-form-item label="密钥长度" prop="keySize">
+            <el-select v-model="keyForm.keySize" style="width: 100%">
+              <el-option
+                v-for="size in availableSizes"
+                :key="size"
+                :label="String(size)"
+                :value="size"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="密钥访问口令" prop="password">
+            <el-input
+              v-model="keyForm.password"
+              type="password"
+              placeholder="请输入密钥访问口令"
+              show-password
+              autocomplete="new-password"
+            />
+          </el-form-item>
+        </template>
+
+        <template v-else :key="'std-fields'">
+          <el-form-item label="密钥用途" prop="usage">
+            <el-checkbox-group v-model="keyForm.usage">
+              <el-checkbox label="签名验签" :disabled="isSymmetricKeyType">
+                签名验签
+              </el-checkbox>
+              <el-checkbox label="加密解密">加密解密</el-checkbox>
+            </el-checkbox-group>
+          </el-form-item>
+          <el-form-item label="密钥长度" prop="keySize">
+            <el-select v-model="keyForm.keySize" style="width: 100%">
+              <el-option
+                v-for="size in availableSizes"
+                :key="size"
+                :label="String(size)"
+                :value="size"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="密钥访问口令" prop="password">
+            <el-input
+              v-model="keyForm.password"
+              type="password"
+              placeholder="请输入密钥访问口令"
+              show-password
+              autocomplete="new-password"
+            />
+          </el-form-item>
+        </template>
       </el-form>
       <template #footer>
         <el-button @click="createDialogVisible = false">取消</el-button>
@@ -136,8 +291,18 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="detailDialogVisible" title="密钥详情" width="480px" class="detail-dialog-p2" align-center>
+    <el-dialog
+      v-model="detailDialogVisible"
+      title="密钥详情"
+      width="520px"
+      class="detail-dialog-p2"
+      align-center
+    >
       <div v-if="currentKey" class="detail-p2-body">
+        <div class="detail-p2-row">
+          <span class="detail-p2-label">密钥索引</span>
+          <span class="detail-p2-value">{{ currentKey.index }}</span>
+        </div>
         <div class="detail-p2-row">
           <span class="detail-p2-label">密钥ID</span>
           <span class="detail-p2-value">{{ currentKey.keyId }}</span>
@@ -147,6 +312,10 @@
           <span class="detail-p2-value">{{ currentKey.keyAlgorithm }}</span>
         </div>
         <div class="detail-p2-row">
+          <span class="detail-p2-label">密钥类型</span>
+          <span class="detail-p2-value">{{ currentKey.keyType || '—' }}</span>
+        </div>
+        <div class="detail-p2-row">
           <span class="detail-p2-label">密钥用途</span>
           <span class="detail-p2-value">{{ currentKey.keyUsage }}</span>
         </div>
@@ -154,6 +323,32 @@
           <span class="detail-p2-label">密钥长度</span>
           <span class="detail-p2-value">{{ currentKey.keyLength }}</span>
         </div>
+        <template v-if="isIbcKeyRow(currentKey)">
+          <div class="detail-p2-row">
+            <span class="detail-p2-label">参数域名</span>
+            <span class="detail-p2-value">{{ currentKey.paramDomain || '—' }}</span>
+          </div>
+          <div class="detail-p2-row">
+            <span class="detail-p2-label">参数版本</span>
+            <span class="detail-p2-value">{{ currentKey.paramVersion || '—' }}</span>
+          </div>
+          <template v-if="currentKey.keyType === KEY_TYPE.SM9_IDENTITY">
+            <div class="detail-p2-row">
+              <span class="detail-p2-label">私钥标识</span>
+              <span class="detail-p2-value">{{ currentKey.privateKeyIdentity }}</span>
+            </div>
+            <div class="detail-p2-row">
+              <span class="detail-p2-label">主密钥</span>
+              <span class="detail-p2-value">{{ formatMasterKeyRef(currentKey) }}</span>
+            </div>
+          </template>
+          <template v-if="currentKey.keyType === KEY_TYPE.SM9_SHARD">
+            <div class="detail-p2-row">
+              <span class="detail-p2-label">主密钥</span>
+              <span class="detail-p2-value">{{ formatMasterKeyRef(currentKey) }}</span>
+            </div>
+          </template>
+        </template>
         <div class="detail-p2-row">
           <span class="detail-p2-label">添加时间</span>
           <span class="detail-p2-value">{{ currentKey.addedTime }}</span>
@@ -164,9 +359,116 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, inject } from 'vue'
+import { ref, reactive, computed, inject, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
+import { QuestionFilled } from '@element-plus/icons-vue'
 import { KEY_MANAGE_SECURITY_KEY } from './keyManageSecurityKey.js'
+
+/** 密钥类型（下拉分组选项值） */
+const KEY_TYPE = {
+  SM2: 'SM2密钥',
+  RSA: 'RSA',
+  SM4: 'SM4',
+  TDES: '3DES',
+  AES: 'AES',
+  SM9_MASTER: 'SM9主密钥',
+  SM9_IDENTITY: 'SM9标识密钥',
+  SM9_SHARD: 'SM9分片主密钥',
+  ML_DSA: 'ML-DSA',
+  SLH_DSA_SHA2: 'SLH-DSA-SHA2',
+  AIGIS_SIG: 'AIGIS-SIG',
+  LMS_SM3: 'LMS-SM3'
+}
+
+/** 对称密钥类型（块密码，仅加密解密） */
+const SYMMETRIC_KEY_TYPES = [KEY_TYPE.SM4, KEY_TYPE.TDES, KEY_TYPE.AES]
+
+/** 分组下拉：PKI / 对称密钥 / IBC */
+const KEY_TYPE_GROUPS = [
+  {
+    label: 'PKI体系密钥',
+    options: [
+      { label: 'SM2密钥', value: KEY_TYPE.SM2 },
+      { label: 'RSA', value: KEY_TYPE.RSA }
+    ]
+  },
+  {
+    label: '对称密钥体系',
+    options: [
+      { label: 'SM4', value: KEY_TYPE.SM4 },
+      { label: '3DES', value: KEY_TYPE.TDES },
+      { label: 'AES', value: KEY_TYPE.AES }
+    ]
+  },
+  {
+    label: 'IBC体系密钥',
+    options: [
+      { label: 'SM9主密钥', value: KEY_TYPE.SM9_MASTER },
+      { label: 'SM9标识密钥', value: KEY_TYPE.SM9_IDENTITY },
+      { label: 'SM9分片主密钥', value: KEY_TYPE.SM9_SHARD }
+    ]
+  },
+  {
+    label: 'PQC体系密钥',
+    options: [
+      { label: 'ML-DSA', value: KEY_TYPE.ML_DSA },
+      { label: 'SLH-DSA-SHA2', value: KEY_TYPE.SLH_DSA_SHA2 },
+      { label: 'AIGIS-SIG', value: KEY_TYPE.AIGIS_SIG },
+      { label: 'LMS-SM3', value: KEY_TYPE.LMS_SM3 }
+    ]
+  }
+]
+
+const IBC_KEY_TYPES = [KEY_TYPE.SM9_MASTER, KEY_TYPE.SM9_IDENTITY, KEY_TYPE.SM9_SHARD]
+
+const PQC_KEY_TYPES = [
+  KEY_TYPE.ML_DSA,
+  KEY_TYPE.SLH_DSA_SHA2,
+  KEY_TYPE.AIGIS_SIG,
+  KEY_TYPE.LMS_SM3
+]
+
+/** SM9 固定密钥用途 */
+const SM9_KEY_USAGE = 'SM9短签名'
+
+/** PQC 固定密钥用途 */
+const PQC_KEY_USAGE = '签名验签'
+
+/** PQC 各算法可选密钥长度/参数 */
+const PQC_SIZES_BY_KEY_TYPE = {
+  [KEY_TYPE.ML_DSA]: ['44', '65', '87'],
+  [KEY_TYPE.SLH_DSA_SHA2]: ['128s', '128f', '192s', '192f', '256s', '256f'],
+  [KEY_TYPE.AIGIS_SIG]: ['SIG1', 'SIG2', 'SIG3'],
+  [KEY_TYPE.LMS_SM3]: ['H5_W1', 'H5_W2', 'H5_W4', 'H5_W8', 'H5_W8_H5_W8']
+}
+
+function resolveKeyAlgorithm (keyType) {
+  if (IBC_KEY_TYPES.includes(keyType)) return 'SM9'
+  if (PQC_KEY_TYPES.includes(keyType)) return keyType
+  if (keyType === KEY_TYPE.SM2) return 'SM2'
+  if (keyType === KEY_TYPE.RSA) return 'RSA'
+  if (SYMMETRIC_KEY_TYPES.includes(keyType)) {
+    if (keyType === KEY_TYPE.TDES) return '3DES'
+    return keyType
+  }
+  return 'SM2'
+}
+
+function isIbcKeyRow (row) {
+  return row && IBC_KEY_TYPES.includes(row.keyType)
+}
+
+function findSm9MasterByRef (masterKeyRef) {
+  return keyList.value.find(
+    (row) => row.keyType === KEY_TYPE.SM9_MASTER && row.keyId === masterKeyRef
+  )
+}
+
+function formatMasterKeyRef (row) {
+  if (!row?.masterKeyRef) return '—'
+  const master = findSm9MasterByRef(row.masterKeyRef)
+  return master?.paramDomain ? `${master.paramDomain}（${row.masterKeyRef}）` : row.masterKeyRef
+}
 
 const filterKeyId = ref('')
 const filterAlgorithm = ref('')
@@ -182,20 +484,86 @@ const formRef = ref(null)
 const securityModalsRef = inject(KEY_MANAGE_SECURITY_KEY) ?? ref(null)
 
 const keyForm = reactive({
-  algorithm: 'SM2',
+  keyType: KEY_TYPE.SM2,
   usage: ['签名验签'],
   keySize: 256,
-  password: ''
+  password: '',
+  paramDomain: '',
+  paramVersion: '',
+  privateKeyIdentity: '',
+  masterKeyRef: ''
 })
 
-const keyRules = {
-  algorithm: [{ required: true, message: '请选择密钥算法', trigger: 'change' }],
-  keySize: [{ required: true, message: '请选择密钥长度', trigger: 'change' }],
-  usage: [{ required: true, message: '请选择密钥用途', trigger: 'change', type: 'array', min: 1 }],
-  password: [
-    { required: true, message: '请输入密钥访问口令', trigger: 'blur' },
-    { min: 6, max: 32, message: '长度在 6 到 32 个字符', trigger: 'blur' }
-  ]
+const PASSWORD_RULES = [
+  { required: true, message: '请输入密钥访问口令', trigger: 'blur' },
+  { min: 6, max: 32, message: '长度在 6 到 32 个字符', trigger: 'blur' }
+]
+
+function validateParamDomainUnique (_rule, value, callback) {
+  const domain = String(value ?? '').trim()
+  if (!domain) {
+    callback()
+    return
+  }
+  const exists = keyList.value.some(
+    (row) => row.keyType === KEY_TYPE.SM9_MASTER && row.paramDomain === domain
+  )
+  if (exists) {
+    callback(new Error('参数域名已存在，请使用其他域名'))
+  } else {
+    callback()
+  }
+}
+
+const formRules = computed(() => {
+  const base = {
+    keyType: [{ required: true, message: '请选择密钥类型', trigger: 'change' }],
+    usage: [{ required: true, message: '请选择密钥用途', trigger: 'blur', type: 'array', min: 1 }],
+    password: PASSWORD_RULES
+  }
+  if (isPqcKeyType.value) {
+    return {
+      ...base,
+      keySize: [{ required: true, message: '请选择密钥长度', trigger: 'change' }]
+    }
+  }
+  if (!isIbcKeyType.value) {
+    return {
+      ...base,
+      keySize: [{ required: true, message: '请选择密钥长度', trigger: 'blur' }]
+    }
+  }
+  const ibcBase = { ...base }
+  if (isSm9MasterKey.value) {
+    return {
+      ...ibcBase,
+      keySize: [{ required: true, message: '请选择密钥长度', trigger: 'blur' }],
+      paramDomain: [
+        { required: true, message: '请输入参数域名', trigger: 'blur' },
+        { validator: validateParamDomainUnique, trigger: 'blur' }
+      ],
+      paramVersion: [{ required: true, message: '请输入参数版本', trigger: 'blur' }]
+    }
+  }
+  if (isSm9IdentityKey.value) {
+    return {
+      ...ibcBase,
+      privateKeyIdentity: [{ required: true, message: '请输入私钥标识', trigger: 'blur' }],
+      masterKeyRef: [{ required: true, message: '请选择主密钥', trigger: 'change' }]
+    }
+  }
+  if (isSm9ShardMasterKey.value) {
+    return {
+      ...ibcBase,
+      masterKeyRef: [{ required: true, message: '请选择主密钥', trigger: 'change' }]
+    }
+  }
+  return ibcBase
+})
+
+async function clearFormValidation () {
+  await nextTick()
+  formRef.value?.clearValidate()
 }
 
 /** 各算法可选密钥长度（位），与算法类型一致 */
@@ -207,29 +575,207 @@ const KEY_SIZES_BY_ALGORITHM = {
   AES: [128]
 }
 
+/** SM9 密钥长度由系统维护 */
+const SM9_SYSTEM_KEY_LENGTH = '256'
+
+const formKeyAlgorithm = computed(() => resolveKeyAlgorithm(keyForm.keyType))
+
 const availableSizes = computed(() => {
-  return KEY_SIZES_BY_ALGORITHM[keyForm.algorithm] ?? [256]
+  if (isPqcKeyType.value) {
+    return PQC_SIZES_BY_KEY_TYPE[keyForm.keyType] ?? []
+  }
+  return KEY_SIZES_BY_ALGORITHM[formKeyAlgorithm.value] ?? [256]
 })
 
-/** SM4 / 3DES / AES 仅支持加密解密 */
-const SYMMETRIC_ALGORITHMS = ['SM4', '3DES', 'AES']
-const isSymmetricKeyAlgorithm = computed(() =>
-  SYMMETRIC_ALGORITHMS.includes(keyForm.algorithm)
+/** 对称密钥体系仅支持加密解密 */
+const isSymmetricKeyType = computed(() => SYMMETRIC_KEY_TYPES.includes(keyForm.keyType))
+
+const isIbcKeyType = computed(() => IBC_KEY_TYPES.includes(keyForm.keyType))
+const isPqcKeyType = computed(() => PQC_KEY_TYPES.includes(keyForm.keyType))
+const isSm9MasterKey = computed(() => keyForm.keyType === KEY_TYPE.SM9_MASTER)
+const isSm9IdentityKey = computed(() => keyForm.keyType === KEY_TYPE.SM9_IDENTITY)
+const isSm9ShardMasterKey = computed(() => keyForm.keyType === KEY_TYPE.SM9_SHARD)
+
+const sm9MasterKeyOptions = computed(() =>
+  keyList.value.filter((row) => row.keyType === KEY_TYPE.SM9_MASTER)
 )
 
-function handleAlgorithmChange () {
-  const sizes = KEY_SIZES_BY_ALGORITHM[keyForm.algorithm]
+function resetIbcFields () {
+  keyForm.paramDomain = ''
+  keyForm.paramVersion = ''
+  keyForm.privateKeyIdentity = ''
+  keyForm.masterKeyRef = ''
+  keyForm.keySize = 256
+}
+
+function applyKeyTypeDefaults () {
+  if (isIbcKeyType.value) {
+    resetIbcFields()
+    keyForm.usage = [SM9_KEY_USAGE]
+    return
+  }
+  if (isPqcKeyType.value) {
+    resetIbcFields()
+    keyForm.usage = [PQC_KEY_USAGE]
+    const sizes = PQC_SIZES_BY_KEY_TYPE[keyForm.keyType]
+    keyForm.keySize = sizes?.length ? sizes[0] : ''
+    return
+  }
+  resetIbcFields()
+  const algo = formKeyAlgorithm.value
+  const sizes = KEY_SIZES_BY_ALGORITHM[algo]
   keyForm.keySize = sizes?.length ? sizes[0] : 256
-  if (isSymmetricKeyAlgorithm.value) {
+  if (isSymmetricKeyType.value) {
     keyForm.usage = ['加密解密']
+  } else {
+    keyForm.usage = ['签名验签']
+  }
+}
+
+async function handleKeyTypeChange () {
+  applyKeyTypeDefaults()
+  await clearFormValidation()
+}
+
+function getIbcValidateFields () {
+  const common = ['keyType', 'usage', 'password']
+  if (isSm9MasterKey.value) {
+    return [...common, 'keySize', 'paramDomain', 'paramVersion']
+  }
+  if (isSm9IdentityKey.value) {
+    return [...common, 'privateKeyIdentity', 'masterKeyRef']
+  }
+  if (isSm9ShardMasterKey.value) {
+    return [...common, 'masterKeyRef']
+  }
+  return common
+}
+
+function resolveIbcParamFromMaster (masterKeyRef) {
+  const master = findSm9MasterByRef(masterKeyRef)
+  return {
+    paramDomain: master?.paramDomain ?? '',
+    paramVersion: master?.paramVersion ?? ''
+  }
+}
+
+function buildIbcKeyRow (now, addedTime) {
+  const base = {
+    index: nextKeyIndex(),
+    keyId: String(now),
+    keyAlgorithm: 'SM9',
+    keyType: keyForm.keyType,
+    keyUsage: SM9_KEY_USAGE,
+    keyLength: SM9_SYSTEM_KEY_LENGTH,
+    addedTime,
+    addedTimeMs: now
+  }
+  if (isSm9MasterKey.value) {
+    return {
+      ...base,
+      keyLength: String(keyForm.keySize),
+      paramDomain: keyForm.paramDomain.trim(),
+      paramVersion: keyForm.paramVersion.trim()
+    }
+  }
+  const params = resolveIbcParamFromMaster(keyForm.masterKeyRef)
+  if (isSm9IdentityKey.value) {
+    return {
+      ...base,
+      ...params,
+      privateKeyIdentity: keyForm.privateKeyIdentity.trim(),
+      masterKeyRef: keyForm.masterKeyRef
+    }
+  }
+  return {
+    ...base,
+    ...params,
+    masterKeyRef: keyForm.masterKeyRef
+  }
+}
+
+function buildPkiKeyRow (now, addedTime) {
+  const usageLabel = keyForm.usage.join('、')
+  return {
+    index: nextKeyIndex(),
+    keyId: String(now),
+    keyAlgorithm: formKeyAlgorithm.value,
+    keyType: keyForm.keyType,
+    keyUsage: usageLabel,
+    keyLength: String(keyForm.keySize),
+    addedTime,
+    addedTimeMs: now
+  }
+}
+
+function buildPqcKeyRow (now, addedTime) {
+  return {
+    index: nextKeyIndex(),
+    keyId: String(now),
+    keyAlgorithm: keyForm.keyType,
+    keyType: keyForm.keyType,
+    keyUsage: PQC_KEY_USAGE,
+    keyLength: String(keyForm.keySize),
+    addedTime,
+    addedTimeMs: now
   }
 }
 
 const keyList = ref([
   {
+    index: 106,
+    keyId: '1763200300666004',
+    keyAlgorithm: 'ML-DSA',
+    keyType: KEY_TYPE.ML_DSA,
+    keyUsage: PQC_KEY_USAGE,
+    keyLength: '65',
+    addedTime: '2025-11-15 12:00:00',
+    addedTimeMs: 1763185200000
+  },
+  {
+    index: 105,
+    keyId: '1763200200555003',
+    keyAlgorithm: 'SM9',
+    keyType: KEY_TYPE.SM9_SHARD,
+    keyUsage: SM9_KEY_USAGE,
+    keyLength: SM9_SYSTEM_KEY_LENGTH,
+    paramDomain: 'svs.sm9.domain.demo',
+    paramVersion: '1.0',
+    masterKeyRef: '1763200100888001',
+    addedTime: '2025-11-15 11:00:00',
+    addedTimeMs: 1763181600000
+  },
+  {
+    index: 104,
+    keyId: '1763200150444002',
+    keyAlgorithm: 'SM9',
+    keyType: KEY_TYPE.SM9_IDENTITY,
+    keyUsage: SM9_KEY_USAGE,
+    keyLength: SM9_SYSTEM_KEY_LENGTH,
+    paramDomain: 'svs.sm9.domain.demo',
+    paramVersion: '1.0',
+    privateKeyIdentity: 'user-identity-001',
+    masterKeyRef: '1763200100888001',
+    addedTime: '2025-11-15 10:15:00',
+    addedTimeMs: 1763178900000
+  },
+  {
+    index: 103,
+    keyId: '1763200100888001',
+    keyAlgorithm: 'SM9',
+    keyType: KEY_TYPE.SM9_MASTER,
+    keyUsage: SM9_KEY_USAGE,
+    keyLength: '256',
+    paramDomain: 'svs.sm9.domain.demo',
+    paramVersion: '1.0',
+    addedTime: '2025-11-15 09:30:00',
+    addedTimeMs: 1763176200000
+  },
+  {
     index: 102,
     keyId: '1763124279630301',
     keyAlgorithm: 'RSA',
+    keyType: KEY_TYPE.RSA,
     keyUsage: '签名验签',
     keyLength: '2048',
     addedTime: '2025-11-14 20:44:39',
@@ -239,6 +785,7 @@ const keyList = ref([
     index: 101,
     keyId: '1763124100123456',
     keyAlgorithm: 'SM2',
+    keyType: KEY_TYPE.SM2,
     keyUsage: '签名验签',
     keyLength: '256',
     addedTime: '2025-11-14 18:22:10',
@@ -271,6 +818,17 @@ const pagedKeyList = computed(() => {
   return list.slice(start, start + pageSize.value)
 })
 
+function formatNow () {
+  const d = new Date()
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
+function nextKeyIndex () {
+  const max = keyList.value.reduce((m, row) => Math.max(m, row.index ?? 0), 0)
+  return max + 1
+}
+
 const handleSearch = () => {
   currentPage.value = 1
 }
@@ -283,27 +841,59 @@ const handleReset = () => {
   currentPage.value = 1
 }
 
-const handleCreate = () => {
+const handleCreate = async () => {
   Object.assign(keyForm, {
-    algorithm: 'SM2',
+    keyType: KEY_TYPE.SM2,
     usage: ['签名验签'],
     keySize: 256,
-    password: ''
+    password: '',
+    paramDomain: '',
+    paramVersion: '',
+    privateKeyIdentity: '',
+    masterKeyRef: ''
   })
   createDialogVisible.value = true
+  await clearFormValidation()
 }
 
 async function handleCreateKey () {
+  const fieldsToValidate = isIbcKeyType.value
+    ? getIbcValidateFields()
+    : isPqcKeyType.value
+      ? ['keyType', 'usage', 'keySize', 'password']
+      : ['keyType', 'usage', 'keySize', 'password']
   try {
-    await formRef.value?.validate()
+    for (const field of fieldsToValidate) {
+      await formRef.value?.validateField(field)
+    }
   } catch {
+    return
+  }
+  if (isIbcKeyType.value && !isSm9MasterKey.value && !sm9MasterKeyOptions.value.length) {
+    ElMessage.warning('请先创建 SM9 主密钥')
     return
   }
   creating.value = true
   setTimeout(() => {
+    const now = Date.now()
+    const addedTime = formatNow()
+    if (isIbcKeyType.value) {
+      keyList.value.unshift(buildIbcKeyRow(now, addedTime))
+    } else if (isPqcKeyType.value) {
+      keyList.value.unshift(buildPqcKeyRow(now, addedTime))
+    } else {
+      keyList.value.unshift(buildPkiKeyRow(now, addedTime))
+    }
     creating.value = false
     createDialogVisible.value = false
-    ElMessage.success('密钥生成成功（签名验签服务器 GM/T 0029-2014 原型）')
+    keyForm.password = ''
+    let msg = '密钥生成成功（签名验签服务器 GM/T 0029-2014 原型）'
+    if (isIbcKeyType.value) {
+      msg = `${keyForm.keyType} 生成成功（密钥索引、密钥 ID 由系统分配）`
+    } else if (isPqcKeyType.value) {
+      msg = `${keyForm.keyType} 密钥生成成功（用途：${PQC_KEY_USAGE}）`
+    }
+    ElMessage.success(msg)
   }, 1500)
 }
 
@@ -397,6 +987,28 @@ const handleViewPassword = (row) => {
   justify-content: flex-end;
 }
 
+.form-label-with-tag,
+.form-label-with-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.field-tip-icon {
+  font-size: 14px;
+  color: $text-secondary;
+  cursor: help;
+}
+
+.key-type-group-select {
+  :deep(.el-select-group__title) {
+    color: $primary-color;
+    font-weight: 600;
+    font-size: 13px;
+    padding-left: 12px;
+  }
+}
+
 .detail-p2-body {
   padding: 8px 0 0;
 }
@@ -413,7 +1025,7 @@ const handleViewPassword = (row) => {
 }
 
 .detail-p2-label {
-  flex: 0 0 120px;
+  flex: 0 0 140px;
   text-align: right;
   padding-right: 16px;
   color: $text-secondary;

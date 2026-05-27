@@ -133,7 +133,7 @@ function confirmUkeyBackup () {
 const authDialogVisible = ref(false)
 const authSubmitting = ref(false)
 const adminPassword = ref('')
-/** @type {import('vue').Ref<'destroy' | 'viewPassword' | null>} */
+/** @type {import('vue').Ref<'destroy' | 'viewPassword' | 'viewAuthCredentials' | null>} */
 const authMode = ref(null)
 const pendingAuthRow = ref(null)
 
@@ -168,6 +168,11 @@ function openViewPasswordFlow (row) {
   openSecondaryAuth('viewPassword', row)
 }
 
+/** 0019 通用密码容器：查看 SAF_Login 认证凭据（PIN），与「查看密钥访问口令」同属敏感操作二次认证 */
+function openViewAuthCredentialsFlow (row) {
+  openSecondaryAuth('viewAuthCredentials', row)
+}
+
 function confirmAuth () {
   if (!adminPassword.value.trim()) {
     ElMessage.warning('请输入管理密码')
@@ -184,6 +189,13 @@ function confirmAuth () {
     const kid = row.keyId ?? ''
     if (mode === 'destroy') {
       ElMessage.success(`密钥 ${kid} 已通过二次认证并销毁（原型演示）`)
+    } else if (mode === 'viewAuthCredentials') {
+      const cname = row.containerName ?? kid
+      ElMessageBox.alert(
+        `容器「${cname}」的认证凭据（PIN，SAF_Login 原型演示）：Sv9#mK2@pL1`,
+        '认证凭据',
+        { confirmButtonText: '知道了' }
+      )
     } else {
       ElMessageBox.alert(
         `密钥 ${kid} 的访问口令（原型演示）：Kp9#xQ2@mL7`,
@@ -201,7 +213,8 @@ onBeforeUnmount(() => {
 defineExpose({
   openUkeyBackup,
   openDestroyFlow,
-  openViewPasswordFlow
+  openViewPasswordFlow,
+  openViewAuthCredentialsFlow
 })
 </script>
 

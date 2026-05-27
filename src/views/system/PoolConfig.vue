@@ -3,49 +3,105 @@
     <div class="page-card">
       <div class="card-title">连接池配置</div>
 
-      <el-form :model="poolForm" label-width="120px" style="max-width: 600px">
-        <el-form-item label="最小连接数">
-          <el-input-number v-model="poolForm.minConnections" :min="1" :max="100" />
-        </el-form-item>
-        <el-form-item label="最大连接数">
-          <el-input-number v-model="poolForm.maxConnections" :min="1" :max="500" />
-        </el-form-item>
-        <el-form-item label="连接超时时间">
-          <el-input v-model="poolForm.timeout" style="width: 200px">
-            <template #append>秒</template>
-          </el-input>
-        </el-form-item>
-        <el-form-item label="空闲连接超时">
-          <el-input v-model="poolForm.idleTimeout" style="width: 200px">
-            <template #append>秒</template>
-          </el-input>
-        </el-form-item>
-        <el-form-item label="最大等待时间">
-          <el-input v-model="poolForm.maxWait" style="width: 200px">
-            <template #append>秒</template>
-          </el-input>
-        </el-form-item>
-        <el-form-item label="连接验证SQL">
-          <el-input v-model="poolForm.validationQuery" placeholder="SELECT 1" />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary">保存配置</el-button>
-          <el-button>重置</el-button>
-        </el-form-item>
-      </el-form>
+      <div class="pool-setting-row">
+        <span class="pool-label">密码运算连接池：</span>
+        <el-input
+          v-model="poolSizeInput"
+          class="pool-input"
+          placeholder="请输入"
+          maxlength="6"
+          @input="onPoolSizeInput"
+        />
+        <el-button type="primary" :loading="saving" @click="handleModify">修改</el-button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 
-const poolForm = reactive({
-  minConnections: 5,
-  maxConnections: 50,
-  timeout: 30,
-  idleTimeout: 600,
-  maxWait: 60,
-  validationQuery: 'SELECT 1'
-})
+const STORAGE_KEY = 'svs_pool_crypto_size'
+
+const poolSize = ref(5)
+const poolSizeInput = ref('5')
+const saving = ref(false)
+
+function onPoolSizeInput (val) {
+  poolSizeInput.value = String(val ?? '').replace(/\D/g, '')
+}
+
+function loadPoolSize () {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY)
+    if (raw != null && raw !== '') {
+      const n = parseInt(raw, 10)
+      if (!Number.isNaN(n) && n > 0) {
+        poolSize.value = n
+        poolSizeInput.value = String(n)
+        return
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  poolSizeInput.value = String(poolSize.value)
+}
+
+onMounted(loadPoolSize)
+
+function handleModify () {
+  const n = parseInt(poolSizeInput.value, 10)
+  if (!poolSizeInput.value.trim() || Number.isNaN(n) || n < 1) {
+    ElMessage.warning('请输入有效的连接池数量（正整数）')
+    return
+  }
+  if (n > 9999) {
+    ElMessage.warning('连接池数量不能超过 9999')
+    return
+  }
+  saving.value = true
+  setTimeout(() => {
+    poolSize.value = n
+    poolSizeInput.value = String(n)
+    sessionStorage.setItem(STORAGE_KEY, String(n))
+    saving.value = false
+    ElMessage.success('连接池配置已修改（原型演示）')
+  }, 300)
+}
 </script>
+
+<style lang="scss" scoped>
+@import '@/styles/variables.scss';
+
+.pool-config {
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: 20px;
+  }
+
+  .pool-setting-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .pool-label {
+    font-size: 14px;
+    color: $text-primary;
+    white-space: nowrap;
+  }
+
+  .pool-input {
+    width: 120px;
+
+    :deep(.el-input__inner) {
+      text-align: left;
+    }
+  }
+}
+</style>

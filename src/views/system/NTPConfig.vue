@@ -3,107 +3,234 @@
     <div class="page-card">
       <div class="card-title">NTP时间源管理</div>
 
-      <div class="action-bar">
-        <el-button type="primary" @click="handleAdd">
-          <el-icon><Plus /></el-icon>
-          添加时间源
-        </el-button>
-        <el-button @click="handleSync">
-          <el-icon><Refresh /></el-icon>
-          立即同步
-        </el-button>
-      </div>
-
-      <el-table :data="ntpList" border stripe>
-        <el-table-column prop="name" label="时间源名称" width="150" />
-        <el-table-column prop="server" label="服务器地址" width="200" />
-        <el-table-column prop="priority" label="优先级" width="80" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <span class="status-tag" :class="row.status === '可用' ? 'success' : 'danger'">
-              {{ row.status }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="lastSync" label="最后同步时间" width="160" />
-        <el-table-column prop="delay" label="延迟" width="100" />
-        <el-table-column label="操作" width="150">
-          <template #default>
-            <el-button type="primary" size="small" link>编辑</el-button>
-            <el-button type="danger" size="small" link>删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <div class="current-time">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="当前系统时间">{{ systemTime }}</el-descriptions-item>
-          <el-descriptions-item label="同步状态">
-            <span class="status-tag success">已同步</span>
-          </el-descriptions-item>
-          <el-descriptions-item label="使用的时间源">{{ currentTimeSource }}</el-descriptions-item>
-          <el-descriptions-item label="时区">{{ timezone }}</el-descriptions-item>
-        </el-descriptions>
-      </div>
-    </div>
-
-    <!-- 添加时间源对话框 -->
-    <el-dialog v-model="dialogVisible" title="添加NTP时间源" width="500px">
-      <el-form :model="ntpForm" label-width="100px">
-        <el-form-item label="时间源名称">
-          <el-input v-model="ntpForm.name" placeholder="例如: 阿里云NTP" />
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="formRules"
+        label-width="120px"
+        class="ntp-form"
+      >
+        <el-form-item label="当前系统时间">
+          <span class="system-time-text">{{ systemTimeDisplay }}</span>
         </el-form-item>
-        <el-form-item label="服务器地址">
-          <el-input v-model="ntpForm.server" placeholder="例如: ntp.aliyun.com" />
+
+        <el-form-item label="时区" prop="timezone">
+          <el-select v-model="form.timezone" class="ntp-field-wide" placeholder="请选择时区">
+            <el-option
+              v-for="opt in TIMEZONE_OPTIONS"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </el-select>
         </el-form-item>
-        <el-form-item label="优先级">
-          <el-input-number v-model="ntpForm.priority" :min="1" :max="10" />
+
+        <el-form-item label="时间设置" prop="timeMode">
+          <el-radio-group v-model="form.timeMode">
+            <el-radio label="pc">使用PC时间</el-radio>
+            <el-radio label="ntp">与NTP服务器同步</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <el-form-item v-if="form.timeMode === 'pc'" label="本地时间" prop="localTime">
+          <el-date-picker
+            v-model="form.localTime"
+            type="datetime"
+            placeholder="请选择本地时间"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            format="YYYY-MM-DD HH:mm:ss"
+            class="ntp-field-wide"
+          />
+        </el-form-item>
+
+        <el-form-item v-else label="NTP服务器" prop="ntpServer">
+          <el-input
+            v-model="form.ntpServer"
+            class="ntp-field-wide"
+            clearable
+            placeholder="例如 ntp.aliyun.com"
+          />
+        </el-form-item>
+
+        <el-form-item label=" ">
+          <div class="form-actions">
+            <el-button type="primary" :loading="submitting" @click="handleSubmit">提交</el-button>
+            <el-button @click="handleReset">重置</el-button>
+          </div>
         </el-form-item>
       </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary">确定</el-button>
-      </template>
-    </el-dialog>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { Plus, Refresh } from '@element-plus/icons-vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ElMessage } from 'element-plus'
 
-const dialogVisible = ref(false)
-const systemTime = ref('2024-03-15 14:30:25')
-const currentTimeSource = ref('阿里云NTP')
-const timezone = ref('Asia/Shanghai (UTC+8)')
+const STORAGE_KEY = 'svs_ntp_config'
 
-const ntpList = ref([
-  { name: '阿里云NTP', server: 'ntp.aliyun.com', priority: 1, status: '可用', lastSync: '2024-03-15 14:30:00', delay: '15ms' },
-  { name: '腾讯云NTP', server: 'ntp.tencent.com', priority: 2, status: '可用', lastSync: '2024-03-15 14:29:00', delay: '18ms' },
-  { name: '国家授时中心', server: 'ntp.ntsc.ac.cn', priority: 3, status: '不可用', lastSync: '2024-03-15 12:00:00', delay: '-' }
-])
+const TIMEZONE_OPTIONS = [
+  { label: '(UTC+08:00) 北京, 重庆, 香港, 乌鲁木齐', value: 'Asia/Shanghai' },
+  { label: '(UTC+00:00) 协调世界时', value: 'UTC' },
+  { label: '(UTC+09:00) 东京, 首尔', value: 'Asia/Tokyo' },
+  { label: '(UTC-05:00) 纽约, 华盛顿', value: 'America/New_York' }
+]
 
-const ntpForm = reactive({
-  name: '',
-  server: '',
-  priority: 1
-})
-
-const handleAdd = () => {
-  dialogVisible.value = true
+const DEFAULT_FORM = {
+  timezone: 'Asia/Shanghai',
+  timeMode: 'pc',
+  localTime: '',
+  ntpServer: 'ntp.aliyun.com'
 }
 
-const handleSync = () => {
-  // 同步时间
+function pad (n) {
+  return String(n).padStart(2, '0')
+}
+
+function formatDateTime (d) {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
+const formRef = ref(null)
+const submitting = ref(false)
+const systemTime = ref(new Date())
+const form = reactive({ ...DEFAULT_FORM, localTime: formatDateTime(new Date()) })
+
+const defaultSnapshot = ref({
+  ...DEFAULT_FORM,
+  localTime: formatDateTime(new Date())
+})
+
+const systemTimeDisplay = computed(() => formatDateTime(systemTime.value))
+
+const formRules = computed(() => {
+  const base = {
+    timezone: [{ required: true, message: '请选择时区', trigger: 'change' }],
+    timeMode: [{ required: true, message: '请选择时间设置方式', trigger: 'change' }]
+  }
+  if (form.timeMode === 'pc') {
+    return {
+      ...base,
+      localTime: [{ required: true, message: '请选择本地时间', trigger: 'change' }]
+    }
+  }
+  return {
+    ...base,
+    ntpServer: [{ required: true, message: '请输入 NTP 服务器地址', trigger: 'blur' }]
+  }
+})
+
+let clockTimer = null
+
+function tickSystemTime () {
+  systemTime.value = new Date()
+}
+
+function loadConfig () {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY)
+    if (!raw) return
+    const saved = JSON.parse(raw)
+    Object.assign(form, {
+      timezone: saved.timezone ?? DEFAULT_FORM.timezone,
+      timeMode: saved.timeMode ?? DEFAULT_FORM.timeMode,
+      localTime: saved.localTime ?? formatDateTime(new Date()),
+      ntpServer: saved.ntpServer ?? DEFAULT_FORM.ntpServer
+    })
+    defaultSnapshot.value = { ...form }
+  } catch {
+    /* ignore */
+  }
+}
+
+function saveConfig () {
+  sessionStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      timezone: form.timezone,
+      timeMode: form.timeMode,
+      localTime: form.localTime,
+      ntpServer: form.ntpServer
+    })
+  )
+}
+
+onMounted(() => {
+  loadConfig()
+  tickSystemTime()
+  clockTimer = setInterval(tickSystemTime, 1000)
+})
+
+onBeforeUnmount(() => {
+  if (clockTimer) {
+    clearInterval(clockTimer)
+    clockTimer = null
+  }
+})
+
+async function handleSubmit () {
+  try {
+    await formRef.value?.validate()
+  } catch {
+    return
+  }
+  submitting.value = true
+  setTimeout(() => {
+    saveConfig()
+    defaultSnapshot.value = {
+      timezone: form.timezone,
+      timeMode: form.timeMode,
+      localTime: form.localTime,
+      ntpServer: form.ntpServer
+    }
+    submitting.value = false
+    ElMessage.success(
+      form.timeMode === 'pc'
+        ? '时间配置已提交（原型演示）'
+        : `已与 NTP 服务器 ${form.ntpServer} 同步配置已保存（原型演示）`
+    )
+  }, 400)
+}
+
+function handleReset () {
+  Object.assign(form, { ...defaultSnapshot.value })
+  formRef.value?.clearValidate()
 }
 </script>
 
 <style lang="scss" scoped>
-.action-bar {
-  margin-bottom: 16px;
+@import '@/styles/variables.scss';
+
+.ntp-config {
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: 24px;
+  }
 }
 
-.current-time {
-  margin-top: 24px;
+.ntp-form {
+  max-width: 640px;
+
+  :deep(.el-form-item__label) {
+    color: $text-primary;
+  }
+}
+
+.system-time-text {
+  font-size: 14px;
+  color: $text-primary;
+  line-height: 32px;
+}
+
+.ntp-field-wide {
+  width: 100%;
+  max-width: 420px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
 }
 </style>

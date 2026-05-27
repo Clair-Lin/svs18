@@ -1,66 +1,60 @@
 <template>
   <div class="sidebar" :class="{ collapsed }">
-    <!-- Logo -->
-    <div class="sidebar-logo">
-      <div class="logo-icon">
-        <el-icon :size="24"><Key /></el-icon>
-      </div>
-      <span v-show="!collapsed" class="logo-text">SVS</span>
-    </div>
-
-    <!-- 菜单 -->
     <el-menu
+      class="sidebar-menu"
       :default-active="activeMenu"
       :default-openeds="['sign-service', 'system']"
       :collapse="collapsed"
       :collapse-transition="false"
-      background-color="#001529"
-      text-color="#ffffff"
-      active-text-color="#ffffff"
       router
     >
-      <!-- 监控功能 -->
       <el-menu-item index="/dashboard">
         <el-icon><Monitor /></el-icon>
-        <template #title>设备资源<el-tag type="danger" effect="dark" size="small" style="margin-left: 6px;">新</el-tag></template>
+        <template #title>设备资源</template>
       </el-menu-item>
 
-      <!-- 应用管理 -->
       <el-menu-item index="/application">
         <el-icon><Grid /></el-icon>
         <template #title>应用管理</template>
       </el-menu-item>
 
-      <!-- 签名验签服务 -->
       <el-sub-menu index="sign-service">
         <template #title>
           <el-icon><Edit /></el-icon>
           <span>签名验签服务</span>
         </template>
         <el-menu-item index="/key/manage">
-          <template #title>密钥管理<el-tag type="danger" effect="dark" size="small" style="margin-left: 6px;">新</el-tag></template>
+          <template #title>密钥管理<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></template>
         </el-menu-item>
-        <el-menu-item index="/cert/manage">证书管理 <el-tag type="danger" effect="dark" size="small" style="margin-left: 6px;">新</el-tag></el-menu-item>
+        <el-menu-item index="/cert/manage">证书管理</el-menu-item>
         <el-menu-item index="/cert/user">用户证书管理</el-menu-item>
-        <el-menu-item index="/cert/ca">CA根证管理<el-tag type="danger" effect="dark" size="small" style="margin-left: 6px;">改</el-tag></el-menu-item>
+        <el-menu-item index="/cert/ca">CA根证管理</el-menu-item>
       </el-sub-menu>
 
-      <!-- 系统管理 -->
       <el-sub-menu index="system">
         <template #title>
           <el-icon><Tools /></el-icon>
           <span>系统管理</span>
         </template>
-        <el-menu-item index="/system/info">系统信息</el-menu-item>
-        <el-menu-item index="/system/network">网络配置</el-menu-item>
-        <el-menu-item index="/system/pool">连接池配置</el-menu-item>
         <el-menu-item index="/system/admin">管理员管理</el-menu-item>
         <el-menu-item index="/system/permission">权限管理</el-menu-item>
+        <el-menu-item index="/system/info">系统信息</el-menu-item>
+        <el-menu-item index="/system/network">网络配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
+        <el-menu-item index="/system/service">服务管理</el-menu-item>
+        <el-menu-item index="/system/whitelist">白名单配置</el-menu-item>
         <el-menu-item index="/system/ntp">NTP时间源管理</el-menu-item>
-        <el-menu-item index="/system/whitelist">白名单配置<el-tag type="danger" effect="dark" size="small" style="margin-left: 6px;">新</el-tag></el-menu-item>
-        <el-menu-item index="/system/detect">一键检测<el-tag type="danger" effect="dark" size="small" style="margin-left: 6px;">改</el-tag></el-menu-item>
+        <el-menu-item index="/system/snmp">SNMP管理<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
+        <el-menu-item index="/system/syslog">Syslog配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
+        <el-menu-item index="/system/pool">连接池配置</el-menu-item>
+        <el-menu-item index="/system/detect">一键检测</el-menu-item>
+        <el-menu-item index="/system/config">系统配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
       </el-sub-menu>
     </el-menu>
+
+    <div class="sidebar-footer" @click="$emit('toggle')">
+      <el-icon><Fold v-if="!collapsed" /><Expand v-else /></el-icon>
+      <span v-show="!collapsed" class="footer-text">收起菜单</span>
+    </div>
   </div>
 </template>
 
@@ -68,17 +62,23 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import {
-  Key, Monitor, Grid, Edit, Tools
+  Monitor, Grid, Edit, Tools, Fold, Expand
 } from '@element-plus/icons-vue'
 
 defineProps({
   collapsed: Boolean
 })
 
+defineEmits(['toggle'])
+
 const route = useRoute()
-const activeMenu = computed(() =>
-  route.path.startsWith('/key/manage') ? '/key/manage' : route.path
-)
+const activeMenu = computed(() => {
+  if (route.path.startsWith('/key/manage')) return '/key/manage'
+  if (route.path.startsWith('/application')) return '/application'
+  if (route.path.startsWith('/system/config')) return '/system/config'
+  if (route.path.startsWith('/system/general')) return '/system/config'
+  return route.path
+})
 </script>
 
 <style lang="scss" scoped>
@@ -86,92 +86,137 @@ const activeMenu = computed(() =>
 
 .sidebar {
   width: $sidebar-width;
-  height: 100vh;
+  height: 100%;
   background: $sidebar-bg;
+  border-right: 1px solid $sidebar-border;
   transition: width $transition-duration;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
 
   &.collapsed {
     width: $sidebar-collapsed-width;
 
-    .sidebar-logo {
-      padding: 0 20px;
+    .sidebar-footer {
+      justify-content: center;
+      padding: 0;
     }
   }
 }
 
-.sidebar-logo {
-  height: $header-height;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+.sidebar-menu {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-right: none !important;
+  background: $sidebar-bg !important;
+  padding-top: 8px;
 }
 
-.logo-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #1890ff, #36cfc9);
+.menu-tag {
+  margin-left: 6px;
+}
+
+.sidebar-footer {
+  height: 48px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  color: #fff;
+  gap: 8px;
+  padding: 0 20px;
+  border-top: 1px solid $sidebar-border;
+  cursor: pointer;
+  color: $sidebar-text;
+  font-size: $font-size-base;
   flex-shrink: 0;
+  transition: color $transition-duration, background $transition-duration;
+
+  .el-icon {
+    font-size: 18px;
+  }
+
+  &:hover {
+    color: $sidebar-text-active;
+    background: rgba(45, 90, 241, 0.06);
+  }
 }
 
-.logo-text {
-  margin-left: 10px;
-  font-size: 18px;
-  font-weight: bold;
-  color: #fff;
+.footer-text {
   white-space: nowrap;
 }
 
 :deep(.el-menu) {
-  border-right: none;
+  --el-menu-bg-color: #{$sidebar-bg};
+  --el-menu-text-color: #{$sidebar-text};
+  --el-menu-active-color: #{$sidebar-text-active};
+  --el-menu-hover-bg-color: rgba(45, 90, 241, 0.06);
 
   .el-menu-item {
-    height: 40px;
-    line-height: 40px;
+    height: 44px;
+    line-height: 44px;
+    color: $sidebar-text;
+
+    .el-icon {
+      color: $sidebar-text;
+    }
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.08) !important;
+      background-color: rgba(45, 90, 241, 0.06) !important;
+      color: $sidebar-text-active;
+
+      .el-icon {
+        color: $sidebar-text-active;
+      }
     }
 
     &.is-active {
-      background-color: $primary-color !important;
+      background-color: $sidebar-active-bg !important;
+      color: $sidebar-text-active !important;
+      font-weight: 500;
+
+      .el-icon {
+        color: $sidebar-text-active !important;
+      }
     }
   }
 
   .el-sub-menu {
     .el-sub-menu__title {
-      height: 40px;
-      line-height: 40px;
-      color: #fff;
+      height: 44px;
+      line-height: 44px;
+      color: $sidebar-text;
 
       .el-icon {
-        color: #fff;
+        color: $sidebar-text;
       }
 
       &:hover {
-        background-color: rgba(255, 255, 255, 0.08) !important;
+        background-color: rgba(45, 90, 241, 0.06) !important;
+        color: $sidebar-text-active;
+
+        .el-icon {
+          color: $sidebar-text-active;
+        }
       }
     }
 
+    .el-menu {
+      background: $sidebar-bg !important;
+    }
+
     .el-menu-item {
-      height: 32px;
-      line-height: 32px;
+      height: 40px;
+      line-height: 40px;
       padding-left: 50px !important;
-      background: #000c17 !important;
+      background: $sidebar-bg !important;
+      min-width: auto;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.08) !important;
+        background: rgba(45, 90, 241, 0.06) !important;
       }
 
       &.is-active {
-        background: $primary-color !important;
+        background: $sidebar-active-bg !important;
       }
     }
   }

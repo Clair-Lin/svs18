@@ -8,12 +8,7 @@
         show-icon
         class="detect-prereq-alert"
       >
-        <template v-if="detectType === 'card'">
-          加密卡检测<strong>无需选择签名证书</strong>，可直接点击「开始检查」。
-        </template>
-        <template v-else>
-          检测前需完成 <strong>CA 根证</strong>、<strong>CRL</strong> 配置并<strong>选择用户签名证书</strong>。点击「检测CA根证」将自动校验根证与 CRL；二者均已配置后，方可从下拉框中选择签名证书；<strong>未选择证书时无法开始检测</strong>。若检测因证书或信任链问题导致接口异常，请按提示补全配置后再检。
-        </template>
+        检测前请上传 <strong>CA 根证</strong> 和 <strong>证书管理</strong> 里面的证书。
       </el-alert>
       <div class="config-panel">
         <div class="config-panel__mode-row">
@@ -25,37 +20,24 @@
           </el-radio-group>
         </div>
         <div class="config-panel__action-row">
-          <div v-show="needsSignCertForMode" class="cert-picker-inline">
-            <span class="config-label">签名证书</span>
-            <el-button
-              type="primary"
-              plain
-              :loading="certPreChecking"
-              @click="runCertPrereqAndOpenSelect"
+          <div v-show="needsCertForMode" class="cert-picker-inline">
+            <span class="config-label">证书</span>
+            <el-input
+              :model-value="selectedCertDisplay"
+              readonly
+              placeholder="请选择证书"
+              class="cert-picker-input"
+              @click="openCertDialog"
             >
-              检测CA根证
-            </el-button>
-            <el-select
-              ref="signCertSelectRef"
-              v-model="selectedSignCertId"
-              :placeholder="signCertSelectPlaceholder"
-              :disabled="!signCertPickerUnlocked"
-              filterable
-              clearable
-              class="cert-picker-select"
-            >
-              <el-option
-                v-for="opt in signCertOptions"
-                :key="opt.value"
-                :label="opt.label"
-                :value="opt.value"
-              />
-            </el-select>
+              <template #append>
+                <el-button class="cert-picker-input__more" @click="openCertDialog">...</el-button>
+              </template>
+            </el-input>
           </div>
           <div class="config-panel__action-end">
             <el-tooltip
               :disabled="!startDetectBlockedByCert"
-              content="请先点击「检测CA根证」并选择签名证书"
+              content="请先选择证书"
               placement="top"
             >
               <span class="config-panel__btn-wrap">
@@ -66,7 +48,7 @@
                   :disabled="startDetectDisabled"
                   @click="runDetect"
                 >
-                  {{ detecting ? '检查中...' : '开始检查' }}
+                  {{ detecting ? '检测中...' : '开始检测' }}
                 </el-button>
               </span>
             </el-tooltip>
@@ -77,7 +59,7 @@
 
     <div class="page-card results-module">
       <div class="results-module__toolbar">
-        <span class="results-module__toolbar-title">检查结果</span>
+        <span class="results-module__toolbar-title">检测结果</span>
         <el-button
           v-if="summary"
           type="primary"
@@ -236,11 +218,20 @@
         </template>
       </div>
     </div>
+
+    <SelectCertificateDialog
+      v-model="certDialogVisible"
+      :certificates="certPickerList"
+      :initial-selected-id="selectedCertId"
+      @confirm="onCertSelected"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
+import SelectCertificateDialog from '@/components/cert/SelectCertificateDialog.vue'
+import { useCertManagePool, mapCertsForPicker } from '@/composables/useCertManagePool'
 import { ElMessage } from 'element-plus'
 import {
   CircleCheck,
@@ -257,68 +248,43 @@ import {
  */
 const DEMO_SIMULATE_CERT_MISSING = false
 
-/**
- * 原型：模拟「是否已配置 CA 根证 / CRL」。任一为 false 时，点击「检测CA根证」将阻断且提示补全配置。
- * 联调真实接口时可改为请求结果。
- */
-const DEMO_DETECT_CA_ROOT_READY = ref(true)
-const DEMO_DETECT_CRL_READY = ref(true)
+/** 与证书管理页「证书管理」列表同源 */
+const { allCerts } = useCertManagePool()
+const certPickerList = computed(() => mapCertsForPicker(allCerts.value))
 
-const signCertOptions = [
-  { value: '1', label: '用户签名证书 · SM2（默认）' },
-  { value: '2', label: '用户签名证书 · RSA-2048' }
-]
+const selectedCertId = ref('')
+const selectedCertDisplay = ref('')
+const certDialogVisible = ref(false)
 
-const selectedSignCertId = ref('')
-const signCertPickerUnlocked = ref(false)
-const certPreChecking = ref(false)
-const signCertSelectRef = ref(null)
+function displayCertName (row) {
+  return row?.certName ?? row?.appCertName ?? ''
+}
+
+function openCertDialog () {
+  certDialogVisible.value = true
+}
+
+function onCertSelected (row) {
+  selectedCertId.value = row.id
+  selectedCertDisplay.value = displayCertName(row)
+}
 
 /** 检测方式：全部 / 服务接口 / 加密卡（须在证书相关 computed 之前声明） */
 const detectType = ref('all')
 const detecting = ref(false)
 
-const signCertSelectPlaceholder = computed(() =>
-  signCertPickerUnlocked.value ? '请选择签名证书' : '请先点击「检测CA根证」完成前置检测'
-)
-
-/** 全部检测 / 服务接口检测须选签名证书；加密卡检测不需要 */
-const needsSignCertForMode = computed(() =>
+/** 全部检测 / 服务接口检测须选证书；加密卡检测不需要 */
+const needsCertForMode = computed(() =>
   detectType.value === 'all' || detectType.value === 'service'
 )
 
 const startDetectBlockedByCert = computed(() =>
-  needsSignCertForMode.value && !selectedSignCertId.value
+  needsCertForMode.value && !selectedCertId.value
 )
 
 const startDetectDisabled = computed(() =>
   detecting.value || startDetectBlockedByCert.value
 )
-
-async function runCertPrereqAndOpenSelect () {
-  certPreChecking.value = true
-  try {
-    await new Promise((r) => setTimeout(r, 320))
-    if (!DEMO_DETECT_CA_ROOT_READY.value) {
-      signCertPickerUnlocked.value = false
-      selectedSignCertId.value = ''
-      ElMessage.warning('尚未配置 CA 根证，请先上传根证后再选择签名证书。')
-      return
-    }
-    if (!DEMO_DETECT_CRL_READY.value) {
-      signCertPickerUnlocked.value = false
-      selectedSignCertId.value = ''
-      ElMessage.warning('尚未配置 CRL（证书撤销列表），请先配置 CRL 后再选择签名证书。')
-      return
-    }
-    signCertPickerUnlocked.value = true
-    ElMessage.success('根证与 CRL 已配置，证书信任链前置条件已就绪，请选择签名证书')
-    await nextTick()
-    signCertSelectRef.value?.focus?.()
-  } finally {
-    certPreChecking.value = false
-  }
-}
 
 const progress = ref(0)
 const progressStatus = ref('')
@@ -354,16 +320,29 @@ function clearDetectResults() {
   categoryExpanded.value = {}
 }
 
-/** 切换检测方式时须重新走 CA 根证、CRL 前置检测并重新选择签名证书 */
-function resetCertPrereqOnModeChange () {
-  selectedSignCertId.value = ''
-  signCertPickerUnlocked.value = false
+/** 切换检测方式时清空已选证书 */
+function resetCertOnModeChange () {
+  selectedCertId.value = ''
+  selectedCertDisplay.value = ''
 }
 
 watch(detectType, () => {
-  resetCertPrereqOnModeChange()
+  resetCertOnModeChange()
   clearDetectResults()
 })
+
+/** 证书管理列表删除后，同步清空已选证书 */
+watch(
+  allCerts,
+  (list) => {
+    if (!selectedCertId.value) return
+    if (!list.some((c) => c.id === selectedCertId.value)) {
+      selectedCertId.value = ''
+      selectedCertDisplay.value = ''
+    }
+  },
+  { deep: true }
+)
 
 const TARGET_LABEL = {
   all: '本机 192.168.1.100',
@@ -373,13 +352,9 @@ const TARGET_LABEL = {
 
 const idleHintText = computed(() => {
   const map = {
-    all: selectedSignCertId.value
-      ? '请点击「开始检查」执行全部检测。'
-      : '请先点击「检测CA根证」并选择签名证书，再点击「开始检查」执行全部检测。',
-    service: selectedSignCertId.value
-      ? '请点击「开始检查」仅执行服务接口检测。'
-      : '请先点击「检测CA根证」并选择签名证书，再点击「开始检查」执行服务接口检测。',
-    card: '请点击「开始检查」仅执行加密卡检测（无需选择证书）。'
+    all: '请点击【开始检测】执行全部检测。',
+    service: '请点击【开始检测】执行服务接口检测。',
+    card: '请点击【开始检测】执行加密卡检测。'
   }
   return map[detectType.value] || map.all
 })
@@ -485,32 +460,32 @@ const MOCK_CARD = {
 }
 
 const STEPS_SERVICE = [
-  { progress: 14, status: '正在检查获取服务器证书接口...' },
-  { progress: 28, status: '正在检查服务器签名接口...' },
-  { progress: 42, status: '正在检查服务器验签接口...' },
-  { progress: 57, status: '正在检查获取随机数接口...' },
-  { progress: 71, status: '正在检查导出证书接口...' },
-  { progress: 85, status: '正在检查数据签名接口...' },
-  { progress: 94, status: '正在检查数据验签接口...' },
-  { progress: 100, status: '检查完成' }
+  { progress: 14, status: '正在检测获取服务器证书接口...' },
+  { progress: 28, status: '正在检测服务器签名接口...' },
+  { progress: 42, status: '正在检测服务器验签接口...' },
+  { progress: 57, status: '正在检测获取随机数接口...' },
+  { progress: 71, status: '正在检测导出证书接口...' },
+  { progress: 85, status: '正在检测数据签名接口...' },
+  { progress: 94, status: '正在检测数据验签接口...' },
+  { progress: 100, status: '检测完成' }
 ]
 
 const STEPS_CARD = [
-  { progress: 50, status: '正在检查加密卡...' },
-  { progress: 100, status: '检查完成' }
+  { progress: 50, status: '正在检测加密卡...' },
+  { progress: 100, status: '检测完成' }
 ]
 
 const STEPS_ALL = [
-  { progress: 10, status: '正在检查获取服务器证书接口...' },
-  { progress: 20, status: '正在检查服务器签名接口...' },
-  { progress: 30, status: '正在检查服务器验签接口...' },
-  { progress: 40, status: '正在检查获取随机数接口...' },
-  { progress: 50, status: '正在检查导出证书接口...' },
-  { progress: 60, status: '正在检查数据签名接口...' },
-  { progress: 70, status: '正在检查数据验签接口...' },
-  { progress: 80, status: '正在检查加密卡...' },
-  { progress: 90, status: '正在汇总检查结果...' },
-  { progress: 100, status: '检查完成' }
+  { progress: 10, status: '正在检测获取服务器证书接口...' },
+  { progress: 20, status: '正在检测服务器签名接口...' },
+  { progress: 30, status: '正在检测服务器验签接口...' },
+  { progress: 40, status: '正在检测获取随机数接口...' },
+  { progress: 50, status: '正在检测导出证书接口...' },
+  { progress: 60, status: '正在检测数据签名接口...' },
+  { progress: 70, status: '正在检测数据验签接口...' },
+  { progress: 80, status: '正在检测加密卡...' },
+  { progress: 90, status: '正在汇总检测结果...' },
+  { progress: 100, status: '检测完成' }
 ]
 
 const progressShown = computed(() => (detecting.value ? progress.value : summary.value ? 100 : 0))
@@ -598,15 +573,15 @@ const inspectItemStats = computed(() => {
 
 function exportReport () {
   if (!summary.value) {
-    ElMessage.warning('请先执行检查')
+    ElMessage.warning('请先执行检测')
     return
   }
   ElMessage.success('报告导出为原型占位，实际环境可对接导出接口')
 }
 
 const runDetect = () => {
-  if ((detectType.value === 'all' || detectType.value === 'service') && !selectedSignCertId.value) {
-    ElMessage.warning('请先点击「检测CA根证」并选择签名证书后再开始检测')
+  if ((detectType.value === 'all' || detectType.value === 'service') && !selectedCertId.value) {
+    ElMessage.warning('请先选择证书后再开始检测')
     return
   }
 
@@ -716,9 +691,26 @@ const runDetect = () => {
   margin-bottom: 4px;
 }
 
-.cert-picker-select {
-  width: 300px;
+.cert-picker-input {
+  width: 360px;
   max-width: 100%;
+  cursor: pointer;
+
+  :deep(.el-input__wrapper) {
+    cursor: pointer;
+  }
+
+  :deep(.el-input__inner) {
+    cursor: pointer;
+  }
+}
+
+.cert-picker-input__more {
+  min-width: 40px;
+  padding-left: 12px;
+  padding-right: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
 }
 
 .detect-cert-abnormal-alert {
@@ -749,7 +741,7 @@ const runDetect = () => {
   margin-bottom: 8px;
 }
 
-/* 上：检测方式；下：签名证书 + 开始检查同一行 */
+/* 上：检测方式；下：证书 + 开始检测同一行 */
 .config-panel {
   display: flex;
   flex-direction: column;

@@ -21,6 +21,36 @@ const routes = [
     redirect: '/system/detect'
   },
   // 应用管理
+  // 应用管理 - 根证书配置（从应用列表「根证书配置」进入）
+  {
+    path: '/application/root-cert-config',
+    name: 'ApplicationRootCertConfig',
+    component: () => import('@/views/ApplicationRootCertConfig.vue'),
+    meta: {
+      title: '根证书配置',
+      breadcrumb: [{ label: '应用管理', to: '/application' }, { label: '根证书配置' }]
+    }
+  },
+  // 应用管理 - 应用详情（从应用列表「详情」进入）
+  {
+    path: '/application/detail',
+    name: 'ApplicationDetail',
+    component: () => import('@/views/ApplicationDetail.vue'),
+    meta: {
+      title: '应用详情',
+      breadcrumb: [{ label: '应用管理', to: '/application' }, { label: '应用详情' }]
+    }
+  },
+  // 应用管理 - 应用证书关联（从应用列表「证书配置」进入）
+  {
+    path: '/application/cert-link',
+    name: 'ApplicationCertLink',
+    component: () => import('@/views/ApplicationCertLink.vue'),
+    meta: {
+      title: '应用证书关联',
+      breadcrumb: [{ label: '应用管理', to: '/application' }, { label: '应用证书关联' }]
+    }
+  },
   {
     path: '/application',
     name: 'Application',
@@ -128,6 +158,15 @@ const routes = [
     }
   },
   {
+    path: '/system/service',
+    name: 'ServiceManage',
+    component: () => import('@/views/system/ServiceManage.vue'),
+    meta: {
+      title: '服务管理',
+      breadcrumb: [{ label: '系统管理' }, { label: '服务管理' }]
+    }
+  },
+  {
     path: '/system/pool',
     name: 'PoolConfig',
     component: () => import('@/views/system/PoolConfig.vue'),
@@ -162,6 +201,38 @@ const routes = [
       title: 'NTP时间源管理',
       breadcrumb: [{ label: '系统管理' }, { label: 'NTP时间源管理' }]
     }
+  },
+  {
+    path: '/system/snmp',
+    name: 'SnmpConfig',
+    component: () => import('@/views/system/SnmpConfig.vue'),
+    meta: {
+      title: 'SNMP管理',
+      breadcrumb: [{ label: '系统管理' }, { label: 'snmp配置' }]
+    }
+  },
+  {
+    path: '/system/syslog',
+    name: 'SyslogConfig',
+    component: () => import('@/views/system/SyslogConfig.vue'),
+    meta: {
+      title: 'Syslog配置',
+      breadcrumb: [{ label: '系统管理' }, { label: 'Syslog配置' }]
+    }
+  },
+  // 系统管理 - 系统配置（接口鉴权 / 证书校验配置）
+  {
+    path: '/system/config',
+    name: 'SystemConfig',
+    component: () => import('@/views/system/SystemConfig.vue'),
+    meta: {
+      title: '系统配置',
+      dynamicBreadcrumb: true
+    }
+  },
+  {
+    path: '/system/general/api-auth',
+    redirect: { path: '/system/config', query: { tab: 'api-auth' } }
   },
   // 系统管理 - 一键检测：服务接口（证书/签名/验签）+ 加密卡 + 汇总
   {

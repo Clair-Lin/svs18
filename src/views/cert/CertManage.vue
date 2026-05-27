@@ -13,10 +13,10 @@
                   style="width: 200px"
                 />
               </el-form-item>
-              <el-form-item label="应用证书名称">
+              <el-form-item label="证书名称">
                 <el-input
                   v-model="searchForm.appCertName"
-                  placeholder="请输入应用证书名称"
+                  placeholder="请输入证书名称"
                   clearable
                   style="width: 200px"
                 />
@@ -35,30 +35,51 @@
             <el-button type="primary" @click="openImportEncryptDialog">导入加密证书</el-button>
           </div>
 
-          <el-table :data="pagedCertList" border stripe>
-            <el-table-column label="应用证书名称/主体DN" min-width="240">
+          <el-table :data="pagedCertList" border>
+            <el-table-column label="证书名称/密钥编号" min-width="200" show-overflow-tooltip>
               <template #default="{ row }">
-                <div class="name-dn-cell">
+                <div class="name-key-cell">
                   <span class="primary-line">{{ row.appCertName }}</span>
-                  <span class="sub-line">{{ row.subjectDn }}</span>
+                  <span class="sub-line">{{ row.keyNumber || row.keyId || '—' }}</span>
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="algorithm" label="算法类型" width="100" />
-            <el-table-column prop="version" label="版本号" width="88" />
-            <el-table-column prop="category" label="证书分类" width="110" />
-            <el-table-column prop="serialNumber" label="证书序列号" width="140" show-overflow-tooltip />
-            <el-table-column prop="subject" label="证书主体" min-width="160" show-overflow-tooltip />
-            <el-table-column prop="status" label="证书状态" width="100">
+            <el-table-column label="算法类型" width="118" show-overflow-tooltip>
               <template #default="{ row }">
-                <span class="status-tag" :class="getStatusClass(row.status)">{{ row.status }}</span>
+                {{ row.algorithmDisplay || row.algorithm }}
               </template>
             </el-table-column>
-            <el-table-column prop="notBefore" label="生效时间" width="118" />
-            <el-table-column prop="notAfter" label="到期时间" width="118" />
-            <el-table-column label="操作" fixed="right" width="88">
+            <el-table-column label="颁发者" min-width="200" show-overflow-tooltip>
               <template #default="{ row }">
-                <el-button type="primary" size="small" link @click="handleView(row)">查看</el-button>
+                {{ row.issuer || '—' }}
+              </template>
+            </el-table-column>
+            <el-table-column label="证书主题" min-width="220" show-overflow-tooltip>
+              <template #default="{ row }">
+                {{ row.subjectDn || '—' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="serialNumber" label="证书序列号" width="120" show-overflow-tooltip />
+            <el-table-column label="证书类型" width="100" show-overflow-tooltip>
+              <template #default="{ row }">
+                {{ row.certType || row.category || '—' }}
+              </template>
+            </el-table-column>
+            <el-table-column label="证书状态" width="108" align="center">
+              <template #default="{ row }">
+                <span class="cert-status-live" :class="getStatusClass(row.status)">
+                  <span class="cert-status-dot" aria-hidden="true" />
+                  {{ row.status }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="notBefore" label="生效时间" width="168" align="center" />
+            <el-table-column prop="notAfter" label="到期时间" width="168" align="center" />
+            <el-table-column label="操作" fixed="right" width="168">
+              <template #default="{ row }">
+                <el-button type="primary" size="small" link @click="handleCertUpdate(row)">更新</el-button>
+                <el-button type="primary" size="small" link @click="handleCertExport(row)">导出</el-button>
+                <el-button type="primary" size="small" link @click="handleCertDelete(row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -76,8 +97,9 @@
         </el-tab-pane>
 
         <el-tab-pane label="证书申请管理" name="apply" lazy>
+          
           <div class="action-bar">
-            <el-button type="primary" @click="openApplyCertDialog">申请应用证书 <el-tag type="danger" effect="dark" size="small" style="margin-left: 6px;">新</el-tag></el-button>
+            <el-button type="primary" @click="openApplyCertDialog">申请应用证书</el-button>
           </div>
           <el-table :data="pagedApplyList" border stripe>
             <el-table-column prop="subjectDn" label="证书主题(DN)" min-width="280" show-overflow-tooltip />
@@ -115,7 +137,13 @@
     </div>
 
     <el-dialog v-model="importEncryptVisible" title="导入加密证书" width="520px" destroy-on-close>
-      <el-form ref="importFormRef" :model="importEncryptForm" :rules="importEncryptRules" label-width="140px">
+      <el-form
+        ref="importFormRef"
+        class="import-encrypt-form"
+        :model="importEncryptForm"
+        :rules="importEncryptRules"
+        label-width="140px"
+      >
         <el-form-item label="证书名称" prop="certName">
           <el-input v-model="importEncryptForm.certName" placeholder="请输入证书名称" clearable />
         </el-form-item>
@@ -160,7 +188,7 @@
     <el-dialog
       v-model="applyCertVisible"
       title="申请应用证书"
-      width="560px"
+      width="680px"
       destroy-on-close
       :close-on-click-modal="false"
     >
@@ -176,52 +204,73 @@
           <el-input v-model="applyCertForm.certName" placeholder="请输入证书名称" clearable maxlength="128" />
         </el-form-item>
         <el-form-item label="算法" prop="algorithm">
-          <el-select v-model="applyCertForm.algorithm" placeholder="请选择算法" style="width: 100%">
+          <el-select v-model="applyCertForm.algorithm" placeholder="请选择算法">
             <el-option label="SM2" value="sm2" />
             <el-option label="RSA" value="rsa" />
           </el-select>
         </el-form-item>
-        <el-form-item label="密钥索引" prop="keyIndex">
-          <el-select v-model="applyCertForm.keyIndex" placeholder="请选择密钥索引" style="width: 100%" filterable>
-            <el-option v-for="n in keyIndexOptions" :key="n" :label="String(n)" :value="n" />
-          </el-select>
+
+        <el-form-item label="使用自定义主题">
+          <el-radio-group v-model="applyCertForm.useCustomSubject" @change="onUseCustomSubjectChange">
+            <el-radio value="yes">是</el-radio>
+            <el-radio value="no">否</el-radio>
+          </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="通用名(CN)" prop="dnCN" class="apply-dn-cn-item">
-          <div class="apply-dn-cn-wrap">
+        <template v-if="applyCertForm.useCustomSubject === 'yes'">
+          <el-form-item label="证书主题(DN)" prop="subjectDnCustom">
             <el-input
-              v-model="applyCertForm.dnCN"
-              placeholder="请输入通用名(CN)，2-50个字符"
-              clearable
-              maxlength="50"
+              v-model="applyCertForm.subjectDnCustom"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入证书主题(DN)"
+              maxlength="512"
+              show-word-limit
             />
-            <p class="apply-dn-cn-tip">
-              通用名可以为邮箱、手机号、域名、姓名，或由中文、英文、数字、_等组成
-            </p>
-          </div>
-        </el-form-item>
-        <el-form-item label="国家(C)" prop="dnC">
-          <el-select v-model="applyCertForm.dnC" placeholder="选择所属国家" style="width: 100%" filterable>
-            <el-option v-for="c in countryOptions" :key="c.code" :label="c.label" :value="c.code" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="省份/州(ST)" prop="dnST">
-          <el-input v-model="applyCertForm.dnST" placeholder="如：广东" clearable maxlength="128" />
-        </el-form-item>
-        <el-form-item label="城市(L)" prop="dnL" class="apply-dn-field">
-          <el-input v-model="applyCertForm.dnL" placeholder="如：深圳" clearable maxlength="128" />
-        </el-form-item>
-        <el-form-item label="公司(O)" prop="dnO">
-          <el-input v-model="applyCertForm.dnO" placeholder="如：a company" clearable maxlength="128" />
-        </el-form-item>
-        <el-form-item label="部门(OU)" prop="dnOU">
-          <el-input v-model="applyCertForm.dnOU" placeholder="如：研发部" clearable maxlength="128" />
-        </el-form-item>
-        <el-form-item label="证书主题" class="apply-dn-subject-preview-item">
-          <div class="apply-dn-subject-preview" :class="{ 'is-placeholder': !applyCurrentSubjectDn }">
-            {{ applyCurrentSubjectDn || '（填写通用名与国家后将显示当前证书主题）' }}
-          </div>
-        </el-form-item>
+            <p class="apply-dn-custom-hint">示例：/C=CN/ST=GuangDong/O=Olym Tech Ltd/CN=13511111111_s1123</p>
+          </el-form-item>
+        </template>
+
+        <template v-else>
+          <el-form-item label="通用名(CN)" prop="dnCN" class="apply-dn-cn-item">
+            <div class="apply-dn-cn-wrap">
+              <el-input
+                v-model="applyCertForm.dnCN"
+                placeholder="请输入通用名(CN), 2-50个字符"
+                clearable
+                maxlength="50"
+              />
+              <p class="apply-dn-cn-tip">
+                通用名可以为邮箱、手机号、域名、姓名，或由中文、英文、数字、_等组成
+              </p>
+            </div>
+          </el-form-item>
+          <el-form-item label="国家(C)" prop="dnC">
+            <el-select v-model="applyCertForm.dnC" placeholder="选择所属国家" filterable>
+              <el-option v-for="c in countryOptions" :key="c.code" :label="c.label" :value="c.code" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="省份/州(ST)" prop="dnST">
+            <el-input v-model="applyCertForm.dnST" placeholder="如：广东" clearable maxlength="128" />
+          </el-form-item>
+          <el-form-item label="城市(L)" prop="dnL" class="apply-dn-field">
+            <el-input v-model="applyCertForm.dnL" placeholder="如：深圳" clearable maxlength="128" />
+          </el-form-item>
+          <el-form-item label="公司(O)" prop="dnO">
+            <el-input v-model="applyCertForm.dnO" placeholder="如：a company" clearable maxlength="128" />
+          </el-form-item>
+          <el-form-item label="部门(OU)" prop="dnOU">
+            <el-input v-model="applyCertForm.dnOU" placeholder="如：研发部" clearable maxlength="128" />
+          </el-form-item>
+          <el-form-item label="邮箱地址" prop="dnEmail">
+            <el-input v-model="applyCertForm.dnEmail" placeholder="请输入邮箱地址" clearable maxlength="128" />
+          </el-form-item>
+          <el-form-item label="证书主题预览" class="apply-dn-subject-preview-item">
+            <div class="apply-dn-subject-preview" :class="{ 'is-placeholder': !applyCurrentSubjectDn }">
+              {{ applyCurrentSubjectDn || '（填写通用名与国家后将显示当前证书主题）' }}
+            </div>
+          </el-form-item>
+        </template>
       </el-form>
       <template #footer>
         <el-button @click="applyCertVisible = false">取消</el-button>
@@ -257,12 +306,14 @@
     <el-dialog v-model="detailDialogVisible" title="证书详情" width="720px">
       <el-descriptions v-if="currentCert" :column="2" border>
         <el-descriptions-item label="应用编号">{{ currentCert.appId }}</el-descriptions-item>
-        <el-descriptions-item label="应用证书名称">{{ currentCert.appCertName }}</el-descriptions-item>
-        <el-descriptions-item label="主体 DN" :span="2">{{ currentCert.subjectDn }}</el-descriptions-item>
-        <el-descriptions-item label="算法类型">{{ currentCert.algorithm }}</el-descriptions-item>
-        <el-descriptions-item label="版本号">{{ currentCert.version }}</el-descriptions-item>
-        <el-descriptions-item label="证书分类">{{ currentCert.category }}</el-descriptions-item>
+        <el-descriptions-item label="密钥编号">{{ currentCert.keyNumber || currentCert.keyId || '—' }}</el-descriptions-item>
+        <el-descriptions-item label="证书名称">{{ currentCert.appCertName }}</el-descriptions-item>
+        <el-descriptions-item label="算法类型">{{ currentCert.algorithmDisplay || currentCert.algorithm }}</el-descriptions-item>
+        <el-descriptions-item label="颁发者" :span="2">{{ currentCert.issuer || '—' }}</el-descriptions-item>
+        <el-descriptions-item label="证书主题(DN)" :span="2">{{ currentCert.subjectDn || '—' }}</el-descriptions-item>
         <el-descriptions-item label="证书序列号">{{ currentCert.serialNumber }}</el-descriptions-item>
+        <el-descriptions-item label="证书类型">{{ currentCert.certType || currentCert.category || '—' }}</el-descriptions-item>
+        <el-descriptions-item label="版本号">{{ currentCert.version || '—' }}</el-descriptions-item>
         <el-descriptions-item label="证书主体" :span="2">{{ currentCert.subject }}</el-descriptions-item>
         <el-descriptions-item label="证书状态">
           <span class="status-tag" :class="getStatusClass(currentCert.status)">{{ currentCert.status }}</span>
@@ -275,8 +326,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, watchEffect } from 'vue'
+import { ref, reactive, computed, watch, watchEffect, nextTick } from 'vue'
 import { setPageBreadcrumbItems } from '@/composables/pageBreadcrumb'
+import { useCertManagePool } from '@/composables/useCertManagePool'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, CircleClose, CircleCheck } from '@element-plus/icons-vue'
 
@@ -286,7 +338,7 @@ const formatNow = () => {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`
 }
 
-/** 将拆分字段组装为 DN（仅含已填项；CN、C 必填由表单保证） */
+/** 将拆分字段组装为 DN（仅含已填项；CN、C 必填由表单保证）；可选邮箱 E= */
 const buildSubjectDnFromForm = (f) => {
   const esc = (v) => String(v || '').replace(/([/+,;"<>\\])/g, '\\$1')
   const segs = []
@@ -295,6 +347,7 @@ const buildSubjectDnFromForm = (f) => {
   if (String(f.dnL || '').trim()) segs.push(`L=${esc(f.dnL.trim())}`)
   if (String(f.dnO || '').trim()) segs.push(`O=${esc(f.dnO.trim())}`)
   if (String(f.dnOU || '').trim()) segs.push(`OU=${esc(f.dnOU.trim())}`)
+  if (String(f.dnEmail || '').trim()) segs.push(`E=${esc(f.dnEmail.trim())}`)
   segs.push(`CN=${esc(f.dnCN)}`)
   return `/${segs.join('/')}`
 }
@@ -306,8 +359,6 @@ const countryOptions = [
   { code: 'JP', label: 'Japan (日本)' },
   { code: 'DE', label: 'Germany (德国)' }
 ]
-
-const keyIndexOptions = Array.from({ length: 32 }, (_, i) => i + 1)
 
 const pageTab = ref('cert')
 const activeTabBreadcrumb = computed(() =>
@@ -338,32 +389,61 @@ const applyCertSubmitting = ref(false)
 const applyCertForm = reactive({
   certName: '',
   algorithm: 'sm2',
-  keyIndex: null,
+  useCustomSubject: 'no',
+  subjectDnCustom: '',
   dnCN: '',
   dnO: '',
   dnOU: '',
   dnL: '',
   dnST: '',
-  dnC: 'CN'
+  dnC: 'CN',
+  dnEmail: ''
 })
 
-/** 与提交时一致的当前主题 DN（通用名、国家未齐时不展示拼接串） */
+/** 非自定义主题时：由拆分字段生成预览 DN */
 const applyCurrentSubjectDn = computed(() => {
   const f = applyCertForm
+  if (f.useCustomSubject === 'yes') return ''
   if (!String(f.dnCN || '').trim() || !f.dnC) return ''
   return buildSubjectDnFromForm(f)
 })
 
-const applyCertRules = {
-  certName: [{ required: true, message: '请输入证书名称', trigger: 'blur' }],
-  algorithm: [{ required: true, message: '请选择算法', trigger: 'change' }],
-  keyIndex: [{ required: true, message: '请选择密钥索引', trigger: 'change' }],
-  dnCN: [
-    { required: true, message: '请输入通用名(CN)', trigger: 'blur' },
-    { min: 2, max: 50, message: '通用名为 2～50 个字符', trigger: 'blur' }
-  ],
-  dnC: [{ required: true, message: '请选择国家(C)', trigger: 'change' }]
-}
+const applyCertRules = computed(() => {
+  const base = {
+    certName: [{ required: true, message: '请输入证书名称', trigger: 'blur' }],
+    algorithm: [{ required: true, message: '请选择算法', trigger: 'change' }]
+  }
+
+  if (applyCertForm.useCustomSubject === 'yes') {
+    return {
+      ...base,
+      subjectDnCustom: [
+        { required: true, message: '请输入证书主题(DN)', trigger: 'blur' },
+        { min: 4, message: '证书主题(DN)至少 4 个字符', trigger: 'blur' }
+      ]
+    }
+  }
+
+  return {
+    ...base,
+    dnCN: [
+      { required: true, message: '请输入通用名(CN)', trigger: 'blur' },
+      { min: 2, max: 50, message: '通用名为 2～50 个字符', trigger: 'blur' }
+    ],
+    dnC: [{ required: true, message: '请选择国家(C)', trigger: 'change' }],
+    dnEmail: [
+      {
+        validator: (_rule, value, callback) => {
+          if (!value || !String(value).trim()) return callback()
+          const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim())
+          if (!ok) callback(new Error('请输入正确邮箱格式'))
+          else callback()
+        },
+        trigger: 'blur'
+      }
+    ]
+  }
+})
 
 const applyList = ref([
   {
@@ -426,14 +506,16 @@ const importEncryptRules = {
   keyAccessPwd: [{ required: true, message: '请输入密钥访问口令', trigger: 'blur' }]
 }
 
-/** 示意图为「暂无数据」，列表默认空；接入接口后可赋值 */
-const allCerts = ref([])
+const { allCerts } = useCertManagePool()
 
 const filteredCertList = computed(() =>
   allCerts.value.filter((row) => {
     if (searchForm.appId && !String(row.appId || '').includes(searchForm.appId.trim())) return false
-    if (searchForm.appCertName && !String(row.appCertName || '').includes(searchForm.appCertName.trim())) {
-      return false
+    if (searchForm.appCertName) {
+      const q = searchForm.appCertName.trim()
+      const name = String(row.appCertName || '')
+      const kn = String(row.keyNumber || row.keyId || '')
+      if (!name.includes(q) && !kn.includes(q)) return false
     }
     return true
   })
@@ -453,6 +535,7 @@ watch(filteredCertList, (list) => {
 const getStatusClass = (status) => {
   switch (status) {
     case '有效':
+    case '生效中':
       return 'success'
     case '即将过期':
       return 'warning'
@@ -504,22 +587,57 @@ const submitImportEncrypt = () => {
   })
 }
 
-const handleView = (row) => {
+const handleCertUpdate = (row) => {
   currentCert.value = row
   detailDialogVisible.value = true
+}
+
+const handleCertExport = (row) => {
+  ElMessage.info(`已模拟导出证书：${row.appCertName}（${row.serialNumber}，原型演示）`)
+}
+
+const handleCertDelete = (row) => {
+  ElMessageBox.confirm('确定删除该证书吗？', '提示', {
+    type: 'warning',
+    confirmButtonText: '确定',
+    cancelButtonText: '取消'
+  })
+    .then(() => {
+      const id = row.id
+      allCerts.value = allCerts.value.filter((r) => r.id !== id)
+      ElMessage.success('已删除')
+    })
+    .catch(() => {})
 }
 
 const resetApplyCertForm = () => {
   Object.assign(applyCertForm, {
     certName: '',
     algorithm: 'sm2',
-    keyIndex: null,
+    useCustomSubject: 'no',
+    subjectDnCustom: '',
     dnCN: '',
     dnO: '',
     dnOU: '',
     dnL: '',
     dnST: '',
-    dnC: 'CN'
+    dnC: 'CN',
+    dnEmail: ''
+  })
+}
+
+function onUseCustomSubjectChange () {
+  nextTick(() => {
+    applyCertFormRef.value?.clearValidate([
+      'subjectDnCustom',
+      'dnCN',
+      'dnC',
+      'dnST',
+      'dnL',
+      'dnO',
+      'dnOU',
+      'dnEmail'
+    ])
   })
 }
 
@@ -532,16 +650,20 @@ const submitApplyCert = () => {
   applyCertFormRef.value?.validate((valid) => {
     if (!valid) return
     applyCertSubmitting.value = true
-    const subjectDn = buildSubjectDnFromForm(applyCertForm)
+    const subjectDn =
+      applyCertForm.useCustomSubject === 'yes'
+        ? String(applyCertForm.subjectDnCustom || '').trim()
+        : buildSubjectDnFromForm(applyCertForm)
     setTimeout(() => {
       applyList.value.unshift({
         id: `a_${Date.now()}`,
         certName: applyCertForm.certName,
         subjectDn,
         algorithm: applyCertForm.algorithm,
+        useCustomSubject: applyCertForm.useCustomSubject,
+        email: applyCertForm.useCustomSubject === 'no' ? String(applyCertForm.dnEmail || '').trim() || undefined : undefined,
         applyStatus: '未签发',
-        applyTime: formatNow(),
-        keyIndex: applyCertForm.keyIndex
+        applyTime: formatNow()
       })
       applyCertSubmitting.value = false
       applyCertVisible.value = false
@@ -634,7 +756,8 @@ const removeApplyRow = (row) => {
   justify-content: flex-end;
 }
 
-.name-dn-cell {
+.name-dn-cell,
+.name-key-cell {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -650,6 +773,34 @@ const removeApplyRow = (row) => {
     line-height: 1.4;
     word-break: break-all;
   }
+}
+
+.cert-status-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: $text-secondary;
+
+  &.success {
+    color: #52c41a;
+  }
+
+  &.warning {
+    color: #faad14;
+  }
+
+  &.danger {
+    color: #ff4d4f;
+  }
+}
+
+.cert-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: currentColor;
 }
 
 .status-tag {
@@ -672,7 +823,8 @@ const removeApplyRow = (row) => {
 }
 
 .encrypt-cert-upload {
-  width: 100%;
+  width: 90%;
+  max-width: 100%;
 }
 
 .text-secondary {
@@ -699,14 +851,36 @@ const removeApplyRow = (row) => {
   :deep(> .el-form-item) {
     margin-bottom: 18px;
   }
+
+  :deep(.el-input),
+  :deep(.el-select),
+  :deep(.el-textarea) {
+    width: 90%;
+    max-width: 100%;
+  }
+}
+
+.import-encrypt-form {
+  :deep(.el-input) {
+    width: 90%;
+    max-width: 100%;
+  }
 }
 
 .apply-dn-cn-wrap {
-  width: 100%;
+  width: 90%;
+  max-width: 100%;
 }
 
 .apply-dn-cn-tip {
   margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: $text-secondary;
+}
+
+.apply-dn-custom-hint {
+  margin: 8px 0 0;
   font-size: 12px;
   line-height: 1.5;
   color: $text-secondary;

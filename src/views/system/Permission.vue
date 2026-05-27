@@ -1,130 +1,237 @@
 <template>
-  <div class="permission">
+  <div class="permission-manage">
     <div class="page-card">
       <div class="card-title">权限管理</div>
 
-      <div class="permission-content">
-        <!-- 角色列表 -->
-        <div class="role-section">
-          <div class="section-header">
-            <span>角色列表</span>
-            <el-button type="primary" size="small">
-              <el-icon><Plus /></el-icon>
-              添加角色
-            </el-button>
-          </div>
-          <el-table :data="roleList" border stripe highlight-current-row @current-change="handleRoleChange">
-            <el-table-column prop="name" label="角色名称" />
-            <el-table-column prop="description" label="描述" />
-            <el-table-column label="操作" width="150">
-              <template #default>
-                <el-button type="primary" size="small" link>编辑</el-button>
-                <el-button type="danger" size="small" link>删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
+      <div class="search-toolbar">
+        <el-form :inline="true" :model="searchForm" class="search-form">
+          <el-form-item label="角色名称">
+            <el-input
+              v-model="searchForm.roleName"
+              placeholder="请输入角色名称"
+              clearable
+              style="width: 200px"
+            />
+          </el-form-item>
+          <el-form-item label="所属模块">
+            <el-select v-model="searchForm.module" placeholder="全部" clearable style="width: 140px">
+              <el-option label="全部" value="" />
+              <el-option label="审计模块" value="审计模块" />
+              <el-option label="业务模块" value="业务模块" />
+              <el-option label="系统模块" value="系统模块" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model="searchForm.status" placeholder="全部" clearable style="width: 120px">
+              <el-option label="全部" value="" />
+              <el-option label="已启用" value="已启用" />
+              <el-option label="已禁用" value="已禁用" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleSearch">查询</el-button>
+            <el-button @click="handleReset">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
 
-        <!-- 权限配置 -->
-        <div class="perm-section">
-          <div class="section-header">
-            <span>权限配置 - {{ currentRole?.name || '请选择角色' }}</span>
-          </div>
-          <el-tree
-            ref="treeRef"
-            :data="permissionTree"
-            show-checkbox
-            node-key="id"
-            :default-checked-keys="checkedPermissions"
-            :props="{ label: 'name', children: 'children' }"
-          />
-          <div class="perm-actions">
-            <el-button type="primary">保存权限</el-button>
-          </div>
-        </div>
+      <div class="action-bar">
+        <el-button type="primary" @click="handleAddRole">新增角色</el-button>
+      </div>
+
+      <el-table :data="pagedList" border class="sys-table" empty-text="暂无数据">
+        <el-table-column prop="roleName" label="角色名称" min-width="160" />
+        <el-table-column prop="module" label="所属模块" width="120" />
+        <el-table-column prop="description" label="角色描述" min-width="220" show-overflow-tooltip />
+        <el-table-column label="状态" width="110" align="center">
+          <template #default="{ row }">
+            <span class="status-cell" :class="row.status === '已启用' ? 'is-on' : 'is-off'">
+              <span class="status-dot" aria-hidden="true" />
+              {{ row.status }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120" fixed="right" align="center">
+          <template #default="{ row }">
+            <div class="row-actions">
+              <el-button
+                v-if="row.status === '已启用'"
+                type="primary"
+                link
+                @click="handleToggleStatus(row)"
+              >
+                禁用
+              </el-button>
+              <el-button v-else type="primary" link @click="handleToggleStatus(row)">启用</el-button>
+              <el-button type="primary" link @click="handleDetail(row)">详情</el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="pagination">
+        <el-pagination
+          v-model:current-page="page"
+          v-model:page-size="pageSize"
+          background
+          layout="total, sizes, prev, pager, next"
+          :total="filteredList.length"
+          :page-sizes="[10, 20, 50]"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { Plus } from '@element-plus/icons-vue'
+import { ref, reactive, computed } from 'vue'
+import { ElMessage } from 'element-plus'
 
-const treeRef = ref(null)
-const currentRole = ref(null)
-const checkedPermissions = ref([])
+const searchForm = reactive({
+  roleName: '',
+  module: '',
+  status: ''
+})
+
+const page = ref(1)
+const pageSize = ref(10)
 
 const roleList = ref([
-  { id: 1, name: '超级管理员', description: '拥有所有权限' },
-  { id: 2, name: '操作员', description: '日常操作权限' },
-  { id: 3, name: '审计员', description: '审计查看权限' }
-])
-
-const permissionTree = ref([
   {
     id: 1,
-    name: '设备资源',
-    children: [{ id: 11, name: '查看' }]
+    roleName: '平台审计管理员',
+    module: '审计模块',
+    description: '默认平台审计管理员',
+    status: '已启用'
   },
   {
     id: 2,
-    name: '签名验签服务',
-    children: [
-      { id: 21, name: '密钥管理' },
-      { id: 22, name: '证书管理' },
-      { id: 23, name: '用户证书管理' },
-      { id: 24, name: 'CA根证管理' }
-    ]
+    roleName: '平台业务管理员',
+    module: '业务模块',
+    description: '默认平台业务管理员',
+    status: '已启用'
   },
   {
     id: 3,
-    name: '系统管理',
-    children: [
-      { id: 31, name: '系统信息' },
-      { id: 32, name: '网络配置' },
-      { id: 34, name: '管理员管理' }
-    ]
+    roleName: '平台系统管理员',
+    module: '系统模块',
+    description: '默认平台系统管理员',
+    status: '已启用'
   }
 ])
 
-const handleRoleChange = (row) => {
-  currentRole.value = row
-  // 根据角色加载权限
-  if (row?.id === 1) {
-    checkedPermissions.value = [11, 21, 22, 23, 24, 31, 32, 34]
-  } else if (row?.id === 2) {
-    checkedPermissions.value = [11, 21, 22]
-  } else {
-    checkedPermissions.value = [11]
-  }
+const filteredList = computed(() =>
+  roleList.value.filter((row) => {
+    if (searchForm.roleName && !row.roleName.includes(searchForm.roleName.trim())) {
+      return false
+    }
+    if (searchForm.module && row.module !== searchForm.module) return false
+    if (searchForm.status && row.status !== searchForm.status) return false
+    return true
+  })
+)
+
+const pagedList = computed(() => {
+  const start = (page.value - 1) * pageSize.value
+  return filteredList.value.slice(start, start + pageSize.value)
+})
+
+function handleSearch () {
+  page.value = 1
+}
+
+function handleReset () {
+  searchForm.roleName = ''
+  searchForm.module = ''
+  searchForm.status = ''
+  page.value = 1
+}
+
+function handleAddRole () {
+  ElMessage.info('新增角色（原型演示）')
+}
+
+function handleToggleStatus (row) {
+  row.status = row.status === '已启用' ? '已禁用' : '已启用'
+  ElMessage.success(`角色已${row.status === '已启用' ? '启用' : '禁用'}（原型演示）`)
+}
+
+function handleDetail (row) {
+  ElMessage.info(`查看角色「${row.roleName}」详情（原型演示）`)
 }
 </script>
 
 <style lang="scss" scoped>
-.permission-content {
-  display: flex;
-  gap: 24px;
-}
+@import '@/styles/variables.scss';
 
-.role-section {
-  flex: 1;
-}
+.permission-manage {
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: 16px;
+  }
 
-.perm-section {
-  flex: 1;
-}
+  .search-toolbar {
+    margin-bottom: 12px;
+  }
 
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  font-weight: bold;
-  font-size: 16px;
-}
+  .search-form {
+    :deep(.el-form-item) {
+      margin-bottom: 12px;
+      margin-right: 16px;
+    }
+  }
 
-.perm-actions {
-  margin-top: 16px;
+  .action-bar {
+    margin-bottom: 12px;
+  }
+
+  .pagination {
+    margin-top: 16px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  :deep(.sys-table) {
+    .el-table__header-wrapper th.el-table__cell {
+      background-color: #f5f7fa !important;
+      color: $text-primary;
+      font-weight: 600;
+    }
+
+    .el-table__body tr.el-table__row {
+      background-color: #fff !important;
+    }
+  }
+
+  .status-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+
+    &.is-on {
+      color: #52c41a;
+    }
+
+    &.is-off {
+      color: $text-secondary;
+    }
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px 8px;
+  }
 }
 </style>

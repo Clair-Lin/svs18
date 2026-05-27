@@ -1,0 +1,31 @@
+.network-table {
+  :deep(.el-table__header-wrapper th.el-table__cell) {
+    background-color: #f5f7fa !important;
+    color: $text-primary;
+    font-weight: 600;
+  }
+
+  :deep(.el-table__body tr.el-table__row) {
+    background-color: #fff !important;
+  }
+
+  :deep(.el-table__body tr.el-table__row:hover > td.el-table__cell) {
+    background-color: #fff !important;
+  }
+
+  &.el-table--border :deep(.el-table__cell) {
+    border-color: #ebeef5;
+  }
+}
+
+.network-panel-toolbar {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
+.network-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}

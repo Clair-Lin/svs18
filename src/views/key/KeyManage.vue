@@ -5,16 +5,13 @@
       <el-tabs v-model="activeTab" class="key-manage-page-tabs">
         <el-tab-pane name="0029" lazy>
           <template #label>
-            <span class="key-tab-label">签名验签服务器密钥</span>
+            <span class="key-tab-label">签名验签密钥</span>
           </template>
           <KeyManage0029Panel />
         </el-tab-pane>
         <el-tab-pane name="0019" lazy>
           <template #label>
-            <span class="key-tab-label">
-              <span>通用密码服务接口密钥</span>
-              <el-tag type="danger" effect="dark" size="small" class="key-tab-label__tag">新</el-tag>
-            </span>
+            <span class="key-tab-label">通用密码容器<el-tag type="danger" effect="dark" size="small" style="margin-left: 6px;">新</el-tag></span>
           </template>
           <KeyManage0019Panel />
         </el-tab-pane>
@@ -112,12 +109,6 @@ watchEffect(() => {
 .key-tab-label {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   line-height: 1.2;
-}
-
-.key-tab-label__tag {
-  margin-left: 2px;
-  vertical-align: middle;
 }
 </style>

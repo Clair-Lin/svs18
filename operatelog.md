@@ -1,5 +1,321 @@
 # 操作日志
 
+## 2026-05-27（系统配置 · 鉴权方式问号位置）
+
+- **`src/views/system/general/SystemApiAuthConfig.vue`**：鉴权方式项使用 `input-with-help` 布局，固定输入框宽度，问号图标紧跟输入框右侧显示。
+
+## 2026-05-27（系统配置 · 接口鉴权提示改为悬浮展示）
+
+- **`src/views/system/general/SystemApiAuthConfig.vue`**：系统级接口鉴权、鉴权方式、默认请求有效期三项说明由行内文字改为 `?` 图标悬浮提示（与证书校验配置一致）。
+
+## 2026-05-27（系统配置 · 证书校验配置默认值与提示符光标）
+
+- **`src/utils/systemCertValidation.js`**：**启用证书合法性校验** 默认改为开启（`enabled: true`）。
+- **`src/views/system/general/SystemCertValidationConfig.vue`**：表单初始值同步为开启；提示符 `?` 悬停光标改为 `default`，不再显示问号样式鼠标。
+
+## 2026-05-27（系统配置 · 证书校验配置按钮区样式）
+
+- **`src/views/system/general/SystemCertValidationConfig.vue`**：提交/重置按钮区域上方增加分隔横线（`border-top`），与接口鉴权页签一致。
+
+## 2026-05-27（系统管理 · 管理员管理 / 系统配置页签）
+
+- **`src/views/system/AdminManage.vue`**：按图1调整——筛选栏查询/重置右对齐；**新增管理员**；表格增加多选列、**所属组织**列；演示数据为 `audit` / `app_admin` / `svssysadmin` 及对应角色与时间；`svssysadmin` 仅保留编辑、重置密码操作。
+- **`src/views/system/SystemConfig.vue`**（新）：**系统配置** 页签容器，含 **接口鉴权**、**证书校验配置** 两个 Tab；面包屑「系统管理 / 系统配置 / {页签}」；支持 `?tab=cert-validation`。
+- **`src/views/system/general/SystemCertValidationConfig.vue`**（新）：证书校验配置——**启用证书合法性校验** 复选框、问号悬浮提示（图3文案）、**提交/重置**；勾选变更即时保存（`sessionStorage`）。
+- **`src/utils/systemCertValidation.js`**（新）：证书校验配置读写。
+- **`src/views/system/general/SystemApiAuthConfig.vue`**：作为系统配置 Tab 子面板；说明标题改为 **系统配置**。
+- **`src/components/layout/Sidebar.vue`**：**通用配置** 菜单改为 **系统配置**（`/system/config`）。
+- **`src/router/index.js`**：注册 `/system/config`；`/system/general/api-auth` 重定向至系统配置接口鉴权页签。
+- **`src/views/ApplicationDetail.vue`**：引导链接文案改为 **系统配置 → 接口鉴权**。
+
+## 2026-05-25（界面布局 · 顶栏全宽 + 侧栏内容分栏）
+
+- **`src/App.vue`**：布局改为 **上部顶栏全宽** + **下部左侧菜单 + 右侧内容**（原先为侧栏通栏、顶栏仅在右侧）。
+- **`src/styles/global.scss`**：`layout-container` 改为纵向 flex；新增 `layout-body` 横向分栏；移除 `main-container`。
+- **`src/components/layout/Sidebar.vue`**：高度由 `100vh` 改为 `100%`，适配下部区域高度。
+
+## 2026-05-25（界面样式 · 顶部栏与侧边菜单）
+
+- **`src/styles/variables.scss`**：主色改为 `#2d5af1`；侧边栏改为浅灰 `#f5f7fa`、选中态 `#e8eeff`；顶栏背景改为蓝色；补充侧边栏文字/边框色变量；侧边栏宽度调整为 220px。
+- **`src/components/layout/Header.vue`**：顶栏改为蓝色背景；左侧 Logo +「签名验签服务器」+ 版本号 1.8.0；右侧「全屏」文字按钮与 `sys_admin` 用户下拉；移除原面包屑与折叠按钮。
+- **`src/components/layout/Sidebar.vue`**：侧边栏改为浅色主题；移除顶部 Logo 区；菜单项深灰文字/图标、选中浅蓝底；底部增加「收起菜单」按钮；系统管理子项顺序与参考图对齐（白名单置于 NTP 前）。
+- **`src/App.vue`**：面包屑移至主内容区顶部；侧边栏折叠事件改由 Sidebar 底部按钮触发。
+- **`src/styles/global.scss`**：补充折叠菜单宽度样式。
+
+## 2026-05-25（系统管理 · 权限/管理员/系统信息界面）
+
+- **`src/views/system/Permission.vue`**：按图1改为筛选（角色名称、所属模块、状态）+ **新增角色** + 列表（角色名称、所属模块、角色描述、状态、禁用/详情）+ 分页；演示三条默认角色。
+- **`src/views/system/AdminManage.vue`**：按图2改为筛选（账号、姓名、状态）+ **新增管理员** + 列表（账号、姓名、状态、角色、创建时间、操作）+ 分页；`log_admin` / `sys_admin` 演示数据及差异化操作项。
+- **`src/views/system/SystemInfo.vue`**：按图3简化为 **设备名称**、**软件版本信息** 两行展示。
+
+## 2026-05-25（系统管理 · NTP 时间源管理界面）
+
+- **`src/views/system/NTPConfig.vue`**：按示意图改为表单页——**当前系统时间**（每秒刷新）、**时区**、**时间设置**（使用 PC 时间 / 与 NTP 服务器同步）、**本地时间** 或 **NTP 服务器**、**提交 / 重置**；配置写入 `sessionStorage`（原型）。
+
+## 2026-05-25（系统管理 · 网络配置四页签）
+
+- **`src/views/system/NetworkConfig.vue`**：网络配置改为 **网口配置 / 子网口 / 聚合接口 / VLAN** 四个 Tab；面包屑为「系统管理 / 网络配置 / {当前页签}」，支持 `?tab=sub|bond|vlan`。
+- **`src/views/system/network/NetworkPortPanel.vue`**（新）：原网口配置内容迁入（不含用途列，界面逻辑不变）。
+- **`src/views/system/network/NetworkSubInterfacePanel.vue`**（新）：子网口列表——子接口、归属主接口、IP、掩码、网口状态、状态、操作；**添加** 按钮；暂无数据。
+- **`src/views/system/network/NetworkBondPanel.vue`**（新）：聚合接口——bond 名称/模式、绑定网口、IP、掩码、网关、状态、操作。
+- **`src/views/system/network/NetworkVlanPanel.vue`**（新）：VLAN——VLAN ID、IP、掩码、网关、关联网口、禁/启用、操作。
+- **`src/views/system/network/networkPanel.scss`**（新）：各 Tab 表格统一样式（表头灰、数据行白）。
+
+## 2026-05-25（密钥管理 · 通用密码容器去掉销毁）
+
+- **`src/views/key/KeyManage0019Panel.vue`**：0019 **通用密码容器** 列表操作移除 **销毁**；保留详情、备份、查看认证凭据。
+
+## 2026-05-25（密钥管理 · PQC 用途文案）
+
+- **`src/views/key/KeyManage0029Panel.vue`**：PQC 算法密钥用途由「签名」改为 **签名验签**；查询区去掉重复的「签名」筛选项。
+
+## 2026-05-25（密钥管理 · 生成密钥弹窗宽度修正）
+
+- **`src/views/key/KeyManage0029Panel.vue`**：移除生成/详情弹窗按 SM9、PQC 动态切换宽度（`640px`/`600px`）的逻辑，改为固定 **560px** / **520px**，避免选择 SM9 时弹窗突然变大。
+
+## 2026-05-25（密钥管理 · PQC 算法与 SM9 用途样式）
+
+- **`src/views/key/KeyManage0029Panel.vue`**：
+  - SM9 **密钥用途** 改为与其它类型一致的 **单选 checkbox**（`SM9短签名`）。
+  - 新增 **PQC体系密钥** 分组：**ML-DSA**（44/65/87）、**SLH-DSA-SHA2**（128s～256f）、**AIGIS-SIG**（SIG1～3）、**LMS-SM3**（H5_W*）；用途固定 **签名**，长度按算法下拉。
+  - 查询区密码算法、密钥用途增加 PQC / 签名 筛选项；演示数据增加 ML-DSA 样例。
+
+## 2026-05-25（密钥管理 · SM9 字段精简）
+
+- **`src/views/key/KeyManage0029Panel.vue`**：
+  - SM9 密钥用途固定为 **SM9短签名**（表单只读展示，不可勾选其它用途）。
+  - 移除 **连接类型**、**密钥名称** 表单项与详情展示。
+  - SM9 **详情** 均展示 **参数域名**、**参数版本**；标识/分片主密钥关联主密钥改为按参数域名选择。
+  - 查询条件增加 **SM9短签名** 筛选项。
+
+## 2026-05-25（密钥管理 · 密钥体系分组修正）
+
+- **`src/views/key/KeyManage0029Panel.vue`**：
+  - **PKI体系密钥**：仅 SM2密钥、RSA。
+  - **对称密钥体系**：SM4、3DES、AES（3DES 为对称块密码，与 SM4/AES 同类）。
+  - **IBC体系密钥**：SM9 三类；移除不存在的 **SM2分片主密钥**。
+
+## 2026-05-25（密钥管理 · 密钥类型分组下拉）
+
+- **`src/views/key/KeyManage0029Panel.vue`**：
+  - 生成密钥首项改为 **密钥类型** 分组下拉：**PKI体系密钥**、**IBC体系密钥**（SM9 三类），与示意图一致。
+  - 移除「先选 SM9 再选子类型」二级下拉；选中 IBC 类型后直接展示对应表单项。
+  - 列表 **密钥类型** 列展示完整类型名；分组标题样式加粗主题色。
+
+## 2026-05-25（密钥管理 · SM9 三类密钥表单）
+
+- **`src/views/key/KeyManage0029Panel.vue`**：
+  - 算法选 **SM9** 后增加 **密钥类型**：**SM9主密钥** / **SM9标识密钥** / **SM9分片主密钥**，按类型切换表单项（对齐原型图 1～3）。
+  - **公共项**：连接类型、密钥名称、密钥用途（各类型选项不同）、密钥访问口令。
+  - **SM9主密钥**：密钥长度 256、参数域名（带说明）、参数版本。
+  - **SM9标识密钥**：私钥标识、主密钥名称（下拉已有主密钥）。
+  - **SM9分片主密钥**：主密钥名称；用途含生成加密/签名密钥及加密解密、签名验签。
+  - 列表增加 **密钥类型** 列；详情按类型展示对应字段；演示数据各类型一条。
+
+## 2026-05-25（密钥管理 · SM9 交互修正）
+
+- **`src/views/key/KeyManage0029Panel.vue`**：
+  - **「新」标签**：移至生成密钥弹窗 **密钥算法** 表单项标签（表示算法能力扩展含 SM9），不再挂在 SM9 选项或「生成密钥」按钮上。
+  - **校验逻辑**：`validate-on-rule-change` 关闭；切换算法后 `clearValidate`；仅提交时按当前算法校验对应字段；用途/密钥长度等改为 `blur` 触发，避免一选算法即全表报错。
+
+## 2026-05-25（密钥管理 · SM9 密钥管理）
+
+- **`src/views/key/KeyManage0029Panel.vue`**（签名验签密钥 Tab）：
+  - **查询**：密码算法筛选项增加 **SM9**。
+  - **列表**：沿用密钥索引、密钥 ID、密钥算法、密钥用途、密钥长度、添加时间与操作列；演示数据新增 SM9 样例。
+  - **生成密钥**：算法可选 **SM9**；选 SM9 后展示 **参数域名**、**参数版本**、**底层密钥资源引用**、**密钥用途**、**密钥访问口令**；不展示密钥索引、密钥 ID、密钥长度及独立 SM9 配置标识；参数域名校验系统内唯一；生成后由系统分配索引、ID、长度。
+  - **详情**：SM9 密钥展示参数域名、参数版本、底层密钥资源引用及系统维护字段；口令不在详情回显。
+  - **操作**：保留详情、备份、销毁、**查看密钥访问口令**（二次认证后展示，与现有安全弹窗一致）。
+
+## 2026-05-20（系统管理 · 连接池配置界面按示意图）
+
+- **`src/views/system/PoolConfig.vue`**：按示意图改为单行配置——**密码运算连接池：** 数字输入（默认 **5**）+ **修改** 按钮；去掉原多字段表单；配置写入 `sessionStorage`（原型）。
+
+## 2026-05-20（系统管理 · 服务管理界面）
+
+- **`src/views/system/ServiceManage.vue`**（新）：**服务管理** 列表——列 **IP / 端口 / 服务状态 / 操作**；状态 **已开启**（绿点）/ **已关闭**；操作 **关闭** / **开启**（带确认）；表头灰色、数据行白色。
+- **`src/router/index.js`**：新增 **`/system/service`**，面包屑「系统管理 / 服务管理」。
+- **`src/components/layout/Sidebar.vue`**：系统管理下增加 **服务管理** 菜单（位于网络配置之后）。
+
+## 2026-05-20（系统管理 · 网络配置界面按示意图）
+
+- **`src/views/system/NetworkConfig.vue`**：**刷新** 移至左侧；表格仅 **表头** 灰色（`#f5f7fa`），数据行纯白；**编辑** 弹窗标题 **网络配置**，含 **名称**（只读）、**IP地址类型**（IPV4/IPV6）、**IP地址** / **子网掩码** / **网关地址**（按类型切换编辑）；**eth0** 显示主网口提示文案。
+
+## 2026-05-20（应用管理 · 移除应用级接口鉴权）
+
+- **`src/views/Application.vue`**：应用操作去掉 **应用接口鉴权**；保留详情、编辑、凭证、证书与根证配置；新建应用仍自动生成凭证数据供「凭证」使用。
+- **`src/views/ApplicationDetail.vue`**：移除整段 **接口鉴权** 配置区，仅保留基本信息，并引导至系统通用配置查看鉴权策略。
+- **`src/views/system/general/SystemApiAuthConfig.vue`**：说明文案改为鉴权仅在系统级配置，凭证在应用管理查看。
+
+## 2026-05-20（证书管理 · 移除关联密钥列）
+
+- **`src/views/cert/CertManage.vue`**：证书管理、证书申请管理列表及证书详情去掉 **关联密钥**；**申请应用证书** 去掉 **密钥索引** 表单项。
+- **`src/composables/useCertManagePool.js`**：演示数据移除 `keyBindIndex`。
+
+## 2026-05-20（证书管理 · 移除绑定对象类型与 0019）
+
+- **`src/views/cert/CertManage.vue`**：去掉 **绑定对象类型** 列与申请表单项；删除 0019 容器相关逻辑与演示数据。
+- **`src/composables/useCertManagePool.js`**：演示数据移除 `keySpec` / `keyBindContainer`。
+
+## 2026-05-20（系统管理 · 系统通用配置 · 接口鉴权）
+
+- **`src/components/layout/Sidebar.vue`**：**系统管理** 下新增二级菜单 **系统通用配置**，其下 **接口鉴权**（`/system/general/api-auth`）。
+- **`src/views/system/general/SystemApiAuthConfig.vue`**（新）：系统级接口鉴权通用策略（总开关、HMAC-SM3、默认请求有效期）；说明各应用密钥在 **应用管理** 配置。
+- **`src/utils/systemApiAuth.js`**（新）：系统通用鉴权配置持久化。
+- **`src/router/index.js`**：注册 **`/system/general/api-auth`** 路由与面包屑。
+- **`src/utils/appApiAuth.js`**：新建应用默认请求有效期读取系统通用配置。
+- **`src/views/Application.vue`**：应用操作项文案改为 **应用接口鉴权**，与系统菜单区分。
+
+## 2026-05-20（接口鉴权 · 应用 ID 复用为调用标识）
+
+- **`src/utils/appApiAuth.js`**：移除 **`accessKey` / `genAccessKey`**；HMAC 鉴权以 **应用 ID** 为调用方标识，仅存 **应用密钥** 等配置；持久化时剥离废弃字段。
+- **`src/views/ApplicationDetail.vue`**：去掉 **应用标识** 表单项；鉴权说明改为请求头携带 **应用 ID**、服务端按 ID 查密钥验签。
+- **`src/components/app/AppCredentialDialog.vue`**：凭证弹窗 **应用ID** 即调用标识，补充说明文案。
+
+## 2026-05-20（应用管理 · 凭证二次认证与展示弹窗）
+
+- **`src/components/app/AppCredentialDialog.vue`**（新）：**凭证** 先 **二次认证**（管理密码），通过后弹出 **密码** 标题弹窗，展示 **应用名称 / 应用ID / 应用凭证**（明文），底部 **复制**；查看操作写入审计日志。
+- **`src/views/Application.vue`**：**凭证** 改为打开上述弹窗，不再跳转应用详情。
+
+## 2026-05-20（应用管理 · 应用操作增加凭证与编辑应用）
+
+- **`src/views/Application.vue`**：**应用操作** 下拉增加 **编辑应用**（弹窗可改名称、状态，应用 ID 只读）、**凭证**；保留详情、接口鉴权、证书配置、根证书配置。
+
+## 2026-05-20（应用详情 · 接口鉴权按需求规格调整）
+
+- **`src/utils/appApiAuth.js`**（新）：统一 **应用标识**（`ak_`+应用ID）、**应用密钥** 生成；`initApiAuthForApp` 在创建应用时写入；`normalizeApiAuth` 补全缺失密钥并过滤允许范围；**重置密钥** 写入 `sessionStorage` 审计日志。
+- **`src/views/ApplicationDetail.vue`**：**应用标识** 改为只读文本 + **复制**；**应用密钥** 初始脱敏展示，去掉 **生成**，仅 **重置**（确认文案按规格）/ **复制**；**允许调用范围** 仅 **签名、验签**；**停用** 时显示黄色提示（不校验 HMAC-SM3，仍校验应用状态与授权范围）。
+- **`src/views/Application.vue`**：新增应用时调用 **`initApiAuthForApp`**；演示应用 `6a056db7e0221707c8c9307a` 启动时补全鉴权数据。
+
+## 2026-05-20（一键检测 · 证书选择与证书管理同源）
+
+- **`src/composables/useCertManagePool.js`**（新）：抽取证书管理列表原型数据为共享池；提供 **`mapCertsForPicker`** 供选择弹窗字段对齐。
+- **`src/views/cert/CertManage.vue`**：列表数据改为 **`useCertManagePool()`**。
+- **`src/views/Detect.vue`**：证书选择弹窗数据来自证书管理同源列表；管理页删除证书后自动清空检测页已选项。
+
+## 2026-05-20（一键检测 · 证书字段文案）
+
+- **`src/views/Detect.vue`**：配置项 **加密证书** 改为 **证书**；占位与提示改为「请选择证书」「请先选择证书」；证书库变量与选择逻辑重命名为 `certPool` / `selectedCertId` 等；可选列表含签名/加密类型证书（`certType` 仍按证书管理分类展示）。
+
+## 2026-05-20（一键检测 · 界面按示意图调整）
+
+- **`src/views/Detect.vue`**：配置区前置提示改为「检测前请上传 CA 根证和证书管理里面的证书」；**签名证书 + 检测CA根证** 改为证书只读输入框（占位「请选择证书」、右侧 **…** 打开 **`SelectCertificateDialog`**）；主按钮文案 **开始检测** / **检测中...**；结果区标题 **检测结果**；空闲提示 **请点击【开始检测】执行全部检测。** 等；进度与导出提示统一为「检测」用语；移除 CA/CRL 前置检测流程。
+
+## 2026-05-19（应用详情 · 接口鉴权交互优化）
+
+- **`src/views/ApplicationDetail.vue`**：合并「是否启用接口鉴权」与「状态」为单一 **接口鉴权状态**（启用/停用），避免双开关语义冲突；**应用密钥**说明补充为与应用标识配对的 HMAC-SM3 对称密钥及验签用途；加载旧配置时兼容 `enabled` 字段。
+
+## 2026-05-19（应用管理 · 应用详情接口鉴权）
+
+- **`src/views/ApplicationDetail.vue`**（新）：**应用详情**页——上区返回与当前应用信息；**基本信息**（名称、ID、状态、创建时间）；**接口鉴权**区域含说明提示（强调**接入安全配置**非业务证书、**应用级**非业务级）、鉴权方式固定 **HMAC-SM3**、应用标识（复制）、应用密钥（生成/重置/复制）、请求有效期默认 **5** 分钟、允许调用范围（签名/验签/加解密）、接口鉴权状态启用/停用；**保存配置** 写入 `sessionStorage`（原型）。
+- **`src/router/index.js`**：新增 **`/application/detail`**（置于 **`/application`** 之前），面包屑「应用管理 / 应用详情」；**不新增**侧栏一级菜单。
+- **`src/views/Application.vue`**：**详情** 跳转应用详情页；原 **凭证** 改为 **接口鉴权**，带 **`section=api-auth`** 定位至鉴权区域；移除详情 `MessageBox` 弹窗。
+
+## 2026-05-19（密钥管理 · 用户操作流程文档）
+
+- **`docs/密钥管理-用户操作流程.md`**（新）：整理密钥管理界面用户操作流程——入口与 Tab（0029/0019）、0029 查询/生成/恢复/行内操作、0019 生成容器/导入/行内操作、共用 UKEY 备份与二次认证、模块关联与原型限制；含 Mermaid 流程图。
+
+## 2026-05-14（证书管理：0019/0029 界面统称「绑定对象类型」）
+
+- **`src/views/cert/CertManage.vue`**：**证书管理** 列表列名 **「密钥体系」→「绑定对象类型」**，展示为 **`bindObjectTypeLabel`（0019/0029 中文说明）+ 密钥容器/密钥索引`**；**证书申请管理** 列名 **「密钥类型」→「绑定对象类型」**；**申请应用证书** 表单项与占位、校验 **「请选择绑定对象类型」**；**证书详情** 描述项同步；新增 **`bindObjectTypeLabel`**，**`formatCertKeyBinding` / `formatApplyKeyBinding`** 均带上类型前缀。**数据字段仍为 `keySpec`（`0019`/`0029`）**。
+
+## 2026-05-14（应用管理 · 证书关联页分区布局，与根证页一致）
+
+- **`src/views/ApplicationCertLink.vue`**：**上区**（返回、提示、标题「应用证书关联」、当前应用信息）**无 `page-card`**，透明底与内容区灰底一致；**下区**将 **「关联已有应用证书」按钮 + 表格** 包在 **`page-card`** 白底模块内；上下区 **16px** 间距。
+
+## 2026-05-14（应用管理 · 根证书配置页分区布局）
+
+- **`src/views/ApplicationRootCertConfig.vue`**：**上区**（页面标题、返回链接、当前应用 ID）**不再使用 `page-card`**，背景透明，与主内容区灰底一致；**下区**将 **「根证书配置」主按钮 + 数据表格** 单独包在 **`page-card`** 内，形成独立 **白底卡片模块**；上下区间距约 **16px**。
+
+## 2026-05-14（应用管理 · 根证书配置页与弹窗）
+
+- **`src/router/index.js`**：新增 **`/application/root-cert-config`**（位于 **`/application`** 之前），面包屑「应用管理 / 根证书配置」。
+- **`src/views/ApplicationRootCertConfig.vue`**（新）：**根证书配置** 页——标题与 **「← 根证书配置——（应用名）」** 返回应用管理、当前应用 ID；主按钮 **「根证书配置」** 打开弹窗；主表列 **应用证书名称/密钥标识**、**根证书**、**证书验证策略**、**删除**；空表 **暂无数据**。
+- **弹窗（图1）**：标题 **根证书配置**；必填 **根证书**（下拉占位「请选择根证书」）、**证书验证策略**（三项：**验证证书有效性** / **且验证CRL** / **且验证OCSP**）；下拉宽度 **90%**；确定后写入一条原型配置。
+- **`src/views/Application.vue`**：**根证书配置** 菜单项改为跳转 **`/application/root-cert-config?appId=&name=`**。
+
+## 2026-05-14（用户证书管理 · 导入弹窗按示意图）
+
+- **`src/views/cert/UserCert.vue`**：**导入证书** 弹窗改为标题 **「导入用户证书」**；表单项 **证书名称**（必填、占位「请输入证书名称」）、**证书文件**（**点击上传**，`accept` 为 **`.cer/.pem/.der`**）；上传下方灰色说明 **「证书文件格式支持.cer、.pem、.der」**；头/底分隔线与内边距；证书名称与上传区宽度约 **68%**（`max-width:360px`）；确定写入列表时使用 **用户填写的证书名称**；弹窗样式置于 **`.user-cert` 外** 以适配 **teleport**。
+
+## 2026-05-14（用户证书管理界面按示意图）
+
+- **`src/views/cert/UserCert.vue`**：按示意图实现 **用户证书管理** — **筛选区**（证书名称、证书序列号、查询/重置，输入约 **90%** 宽）；**导入证书**、**批量删除**；**表格**（多选、证书名称/序列号/主题/颁发者/状态标签/类型/签名算法/签发与过期时间、操作删除）；**暂无数据**；**分页**；**导入证书** 弹窗上传后插入一条原型数据。
+
+## 2026-05-14（应用管理 · 应用证书关联页与关联弹窗）
+
+- **`src/router/index.js`**：新增 **`/application/cert-link`**（置于 **`/application`** 之前避免被吞），面包屑「应用管理 / 应用证书关联」。
+- **`src/views/ApplicationCertLink.vue`**（新）：**应用证书关联** 页——返回应用管理、标题与当前应用信息、**「关联已有应用证书」** 主按钮；主表列 **应用证书名称/标识编码**、**算法类型**、**操作（删除）**；无数据 **暂无数据**；确认关联后写入两条（签名/加密）原型数据。
+- **`src/components/cert/AssociateExistingAppCertDialog.vue`**（新）：弹窗标题 **关联已有应用证书**；多选表格（名称/ID、算法、颁发者、序列号、申请日期、到期时间、证书类型）+ 分页；**必选各一张签名与加密证书** 后确定；超过两张自动取消多余勾选。
+- **`src/views/Application.vue`**：**证书配置** 改为跳转 **`/application/cert-link?appId=&name=`**。
+- **`src/components/layout/Sidebar.vue`**：**`/application/cert-link`** 下仍高亮 **应用管理**。
+
+## 2026-05-14（证书管理：表单控件宽度 90%）
+
+- **`src/views/cert/CertManage.vue`**：**申请应用证书** 弹窗内 **输入框 / 下拉 / 多行文本** 统一为内容区 **90%** 宽（`max-width:100%`）；**通用名** 外层 **`apply-dn-cn-wrap`** 同步 **90%**；**导入加密证书** 弹窗增加 **`import-encrypt-form`**，密码类 **el-input** 与 **`encrypt-cert-upload`** 均为 **90%**（导入证书弹窗共用上传样式）。
+
+## 2026-05-14（证书申请：自定义主题是/否分支 UI）
+
+- **`src/views/cert/CertManage.vue`**：**申请应用证书** 增加 **使用自定义主题**（是/否）。**是**：仅 **证书主题(DN)** 多行输入（必填）+ 示例说明，与图1一致；**否**：**通用名/国家/ST/L/O/OU/邮箱** + **证书主题预览**（与图2一致）。**密钥类型、密钥容器/密钥索引、算法** 逻辑不变；拆分组装 DN 支持可选 **E=邮箱**；提交时按分支取 **整行 DN** 或 **`buildSubjectDnFromForm`**；列表记录附带 **`useCustomSubject` / `email`**。
+
+## 2026-05-14（证书申请：密钥容器/密钥索引必填）
+
+- **`src/views/cert/CertManage.vue`**：**申请应用证书** 弹窗中 **密钥容器**（0019）、**密钥索引**（0029）改为 **`required` 动态规则**（随密钥类型切换），占位提示标明必填；两项表单项改为 **`v-show`** 以保持校验与 **必填星号** 正确；校验触发 **`change` + `blur`**。
+
+## 2026-05-14（应用管理界面按示意图）
+
+- **`src/views/Application.vue`**：按示意图重做 **应用管理** — **筛选区**（应用名称/ID、状态下拉含全部/启用/停用、创建时间范围、查询/重置）、**新增应用** 按钮、**表格**（应用名称/ID 双行、启用带绿色对勾图标、创建时间、**应用操作** 下拉：凭证 / 详情 / 证书配置 / 根证书配置）；**证书配置**、**根证书配置** 跳转 **`/cert/manage`**、**`/cert/ca`** 并提示已统一到证书与 CA 管理；底部分页 **共 N 条**；**新增应用** 弹窗录入名称后写入列表（原型 ID）。
+- **`src/components/layout/Sidebar.vue`**：修正 **`activeMenu`**，使 **`/application`** 等路径不再被误判为 **`/key/manage`**，应用管理菜单可正确高亮。
+
+## 2026-05-14（0019 查看认证凭据；证书列表对齐示意图）
+
+- **`src/views/key/KeyManage0019Panel.vue`**：操作列增加 **「查看认证凭据」**，调用 **`KeyManageSecurityModals`** 已暴露的 **`openViewAuthCredentialsFlow`**（二次认证后展示 PIN 原型，与 0029「查看密钥访问口令」一致）。
+- **`src/views/cert/CertManage.vue`**：**证书管理** 主表按示意图调整列：**证书名称/密钥编号**（双行）、**算法类型**（支持 `algorithmDisplay`，示例为 SM3WithSM2）、**颁发者**、**证书主题**（独立 DN 列）、**关联密钥**（仅 **`密钥容器：xx`** / **`密钥索引：xx`**，不再带 0019/0029 前缀）、**证书序列号**、**证书类型**、**证书状态**（圆点 + 文案，含 **生效中**）、**生效/到期时间**（含时分秒）、**操作**（**更新** 打开详情、**导出**、**删除**）；去掉原斑马主表；筛选区「应用证书名称」改为 **证书名称** 且可同时按 **密钥编号** 匹配；**`allCerts`** 示例数据贴近截图并带 **`id`** 供删除；**证书申请管理** 中 **密钥绑定** 列与主表关联密钥文案一致。
+
+## 2026-05-14（密钥与证书：0019 去关联证书；证书管理关联字段；申请弹窗密钥类型）
+
+- **`src/views/key/KeyManage0019Panel.vue`**：**通用密码服务接口（0019）密钥** 页去掉 **关联证书** 列表列、操作列中的 **关联/更换证书**、详情中的 **关联证书** 与 **证书信息** 子表、**关联证书** 弹窗及 **`SelectCertificateDialog`**；演示数据去掉 **`certBindings` / `applicationCertList`** 等与证书绑定相关的字段与逻辑。
+- **`src/views/cert/CertManage.vue`**：**证书管理** 列表增加 **「关联密钥」** 列（展示 **0019·容器** 或 **0029·索引**），**详情** 同步展示；**`allCerts`** 增加两条原型示例数据；**证书申请管理** 列表增加 **密钥类型**、**密钥绑定** 列；**申请应用证书** 弹窗增加 **密钥类型**（0019/0029），**0019** 时选 **容器**（与 0019 密钥页演示容器名一致），**0029** 时选 **密钥索引**，校验与提交写入 **`keySpec` / `containerName` / `keyIndex`**；默认示例申请记录已区分 0019/0029。
+
+## 2026-05-13（选择证书弹窗 · 分页缩小与表格表头着色）
+
+- **`src/components/cert/SelectCertificateDialog.vue`**：**分页** 使用 **`size="small"`**，并收紧 **总数文案、每页条数选择器、页码按钮** 的字号与高度（约 12px / 26px）；**表格** 去掉 **`stripe`**，表头统一 **#f5f7fa** 底色与加粗字重，数据行 **纯白**、悬停与斑马无额外底色。
+
+## 2026-05-13（选择证书弹窗 · 收紧四周留白）
+
+- **`src/components/cert/SelectCertificateDialog.vue`**：进一步缩小 **标题栏 / 正文 / 页脚** 内边距（如标题 **4×10**、正文 **8×10**、页脚 **6×10**）；**`--el-dialog-padding-primary: 8px`**；**`show-close`** 时右侧留白改为 **32px**；关闭按钮 **right: 4px、28×28**；根节点 **`padding: 0`**。补回顶部 **info 提示条**（含证书管理链接）及对应 scoped 样式，避免与工具栏脱节。
+
+## 2026-05-13（选择证书弹窗 · 统一图示样式）
+
+- **`src/components/cert/SelectCertificateDialog.vue`**（新）：标题「选择证书」；顶部 **info 提示条**（浅蓝底 + 图标），文案含跳转 **`/cert/manage`** 的「证书管理」紫色下划线链接；**密钥编码 / 证书名称** 筛选 + **查询 / 重置**（条件在点击查询后生效）；**已选 N 个证书**；表格列：**单选**、证书名称/密钥编码（双行）、算法类型、颁发者、证书主题、证书序列号、证书类型；底部分页 **共 N 条、每页条数、翻页**；页脚 **取消 / 确定**；标题栏浅灰底与底部分隔线与示意图一致。
+- **`src/views/key/KeyManage0019Panel.vue`**：原「关联已有应用证书」内联表格弹窗改为使用 **`SelectCertificateDialog`**；演示数据补充 **keyCode、issuer、subject、certType、算法展示 SM3WithSM2** 等与表头一致字段。
+
+## 2026-05-13（界面：移除版本更新标记）
+
+- **`src/components/layout/Sidebar.vue`**：侧栏「密钥管理」去掉红色 **`V1.9.0`** 版本标签，仅保留菜单文案。
+- **`src/views/cert/CACert.vue`**：CA 根证筛选区各筛选项标签去掉 **`V1.8.0`** 红色标签。
+- **`src/views/cert/CertManage.vue`**：「证书申请管理」页签去掉标题中的 **`V 1.8.0`** 文案；「申请应用证书」按钮去掉 **`新`** 标签。
+- **`src/views/key/KeyManage.vue`**：「通用密码服务接口密钥」页签去掉 **`新`** 标签；同步删除未再使用的 **`.key-tab-label__tag`** 样式。
+- **`src/views/key/KeyManage0029Panel.vue`**：「生成密钥」按钮去掉 **`新`** 标签。
+
+## 2026-05-11（系统管理 · Syslog配置）
+
+- **`src/components/layout/Sidebar.vue`**：在「系统管理」下增加子菜单 **Syslog配置**，路由 `#/system/syslog`（位于 SNMP 与白名单之间）。
+- **`src/router/index.js`**：注册 **`/system/syslog`**，面包屑「系统管理 / Syslog配置」。
+- **`src/views/system/SyslogConfig.vue`**（新）：**Syslog配置** 标题；**+ 添加Syslog服务器** 打开表格内编辑行（IP、端口占位与图2一致）；**保存** 校验 IPv4/粗 IPv6 与端口 1–65535 后写入列表并提示成功（图3）；已保存行仅 **删除**；无数据时表格 **暂无数据**（图1）；有数据时底栏 **分页**（共 N 条、每页条数，与图3一致）。
+
+## 2026-05-11（系统管理 · SNMP管理 / snmp配置页）
+
+- **`src/components/layout/Sidebar.vue`**：在「系统管理」下增加子菜单 **SNMP管理**，路由 `#/system/snmp`（位于 NTP 与白名单之间）。
+- **`src/router/index.js`**：注册路由 **`/system/snmp`**，`meta.title` 为「SNMP管理」，面包屑为「系统管理 / snmp配置」。
+- **`src/views/system/SnmpConfig.vue`**（新）：snmp 配置原型页——**SNMP服务状态** 开关；**SNMP版本_V3** 分区（左侧色条标题 + 用户表：用户名、安全级别、认证协议/密码、加密协议/密钥、操作编辑删除；**+ 添加用户**）；**SNMP版本_V2** 分区与 **启用SNMP_V2** 开关；底部 **确定**（原型提示保存）。
+
+## 2026-05-11（Git：新建开发迭代分支）
+
+- 自 **`SVS_1.8.0`** 检出并创建分支 **`SVS_1.9.0`**，作为下一版原型开发迭代线；工作区未提交改动仍保留在当前检出分支上。
+- **`README.md`**：「当前开发分支」由 `SVS_1.8.0` 更新为 `SVS_1.9.0`。
+- 首次推送到远程时需在本机执行：`git push -u origin SVS_1.9.0`（需具备 `origin` 写权限且网络可达）。
+
 ## 2026-05-07（证书管理 · 申请弹窗主题标签字体与证书主题行对齐）
 
 - **`src/views/cert/CertManage.vue`**：去掉主题区表单项 **`apply-dn-field` 对标签的加粗/颜色覆盖**，使 **通用名(CN)～部门(OU)、证书主题** 与 **证书名称 / 算法 / 密钥索引** 使用 Element Plus 默认标签字重与颜色。**证书主题** 行内容区增加 **`flex:1; min-width:0`**，内层预览 **`flex:1; min-width:0`**，避免长 DN 把标签挤换行；垂直 **居中对齐**；预览文案改为 **`font-size` / `line-height` / `font-family` 与表单项正文一致**（不再单独等宽体），占位色用 **`--el-text-color-secondary`**。
