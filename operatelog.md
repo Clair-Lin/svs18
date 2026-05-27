@@ -1,5 +1,29 @@
 # 操作日志
 
+## 2026-05-27（设备自检 · 自检项目提示）
+
+- **`DeviceInspectPanel.vue`**：移除内置密码卡只读状态条；改为 **info** 提示框单行展示全部自检项目（顿号分隔）。
+
+## 2026-05-27（检测中心 · 简化检测范围与详情弹窗）
+
+- **`ServiceDetectPanel.vue`**：移除检测范围选择，仅保留服务接口检测（证书 + 开始检测）。
+- **`DeviceInspectPanel.vue`**：移除自检范围/自定义勾选项，固定执行全部 8 项自检。
+- **`InspectSchedulePanel.vue`**：移除定时策略中的自检范围配置（固定全部项）。
+- **`InspectHistoryPanel.vue`**：执行记录详情由侧栏抽屉改为 **居中 `el-dialog`**；范围列固定展示「服务接口」/「全部自检项」。
+
+## 2026-05-27（检测中心 · 业务检测 / 设备自检 / 定时 / 记录）
+
+- **`src/views/system/InspectCenter.vue`**（新）：检测中心 Tab 壳页——**业务检测**、**设备自检**、**定时策略**、**执行记录**；面包屑「系统管理 / 检测中心 / {页签}」；支持 `?tab=device|schedule|history`。
+- **`src/views/system/inspect/ServiceDetectPanel.vue`**（新）：原一键检测服务接口部分；范围 **全部接口检测** / **服务接口检测**；**移除加密卡检测**；证书选择与结果展示；执行写入执行记录。
+- **`src/views/system/inspect/DeviceInspectPanel.vue`**（新）：8 项设备自检（随机数、SM1–SM4、密钥完整性、内置密码卡、设备自检）；全部/自定义范围；结果按分类折叠；顶部只读展示上次密码卡自检结论。
+- **`src/views/system/inspect/InspectSchedulePanel.vue`**（新）：定时设备自检策略（启用、每天/每周、时刻、范围）；失败告警开关占位；下次/上次执行展示。
+- **`src/views/system/inspect/InspectHistoryPanel.vue`**（新）：执行记录列表、筛选、分页、详情抽屉。
+- **`src/components/inspect/InspectResultsPanel.vue`**（新）：检测结果汇总卡与分类明细复用组件。
+- **`src/utils/inspectCenter.js`**（新）：自检项定义、定时策略与历史 localStorage、演示结果生成。
+- **`src/styles/inspect-results.scss`**、**`inspect-panel-config.scss`**（新）：检测/自检 UI 样式。
+- **`src/router/index.js`**：`/system/inspect` 检测中心；`/system/detect` 重定向至 `?tab=service`。
+- **`src/components/layout/Sidebar.vue`**：菜单「一键检测」改为 **检测中心**。
+
 ## 2026-05-27（集群 / 高可用 · 业务逻辑纠正）
 
 - **`src/utils/systemCluster.js`**：授权码改为 32 位十六进制随机串，集群级 `authCode` 创建时生成；新增 `buildClusterDeviceRows`、节点角色判断辅助函数。

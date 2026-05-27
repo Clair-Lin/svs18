@@ -56,7 +56,7 @@
         <el-menu-item index="/system/snmp">SNMP管理<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
         <el-menu-item index="/system/syslog">Syslog配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
         <el-menu-item index="/system/pool">连接池配置</el-menu-item>
-        <el-menu-item index="/system/detect">一键检测<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
+        <el-menu-item index="/system/inspect">检测中心<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
         <el-menu-item index="/system/config">系统配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
         <el-menu-item index="/system/ha">高可用配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
       </el-sub-menu>
@@ -94,6 +94,8 @@ const activeMenu = computed(() => {
   if (route.path.startsWith('/system/ha')) return '/system/ha'
   if (route.path.startsWith('/system/hot-standby')) return '/system/ha'
   if (route.path.startsWith('/system/cluster')) return '/system/ha'
+  if (route.path.startsWith('/system/inspect')) return '/system/inspect'
+  if (route.path.startsWith('/system/detect')) return '/system/inspect'
   return route.path
 })
 </script>

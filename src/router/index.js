@@ -266,18 +266,19 @@ const routes = [
     path: '/system/cluster',
     redirect: { path: '/system/ha', query: { tab: 'cluster' } }
   },
-  // 系统管理 - 一键检测：服务接口（证书/签名/验签）+ 加密卡 + 汇总
+  // 系统管理 - 检测中心：业务检测 / 设备自检 / 定时策略 / 执行记录
+  {
+    path: '/system/inspect',
+    name: 'InspectCenter',
+    component: () => import('@/views/system/InspectCenter.vue'),
+    meta: {
+      title: '检测中心',
+      dynamicBreadcrumb: true
+    }
+  },
   {
     path: '/system/detect',
-    name: 'Detect',
-    component: () => import('@/views/Detect.vue'),
-    meta: {
-      title: '一键检测',
-      breadcrumb: [
-        { label: '系统管理', to: '/system/info' },
-        { label: '一键检测' }
-      ]
-    }
+    redirect: { path: '/system/inspect', query: { tab: 'service' } }
   }
 ]
 
