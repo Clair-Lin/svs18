@@ -3,7 +3,7 @@
     <el-menu
       class="sidebar-menu"
       :default-active="activeMenu"
-      :default-openeds="['sign-service', 'system']"
+      :default-openeds="['sign-service', 'network', 'system']"
       :collapse="collapsed"
       :collapse-transition="false"
       router
@@ -31,6 +31,17 @@
         <el-menu-item index="/cert/ca">CA根证管理</el-menu-item>
       </el-sub-menu>
 
+      <el-sub-menu index="network">
+        <template #title>
+          <el-icon><Connection /></el-icon>
+          <span>网络配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></span>
+        </template>
+        <el-menu-item index="/network/interface">
+          <template #title>接口管理<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></template>
+        </el-menu-item>
+        <el-menu-item index="/network/route">路由配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
+      </el-sub-menu>
+
       <el-sub-menu index="system">
         <template #title>
           <el-icon><Tools /></el-icon>
@@ -39,15 +50,15 @@
         <el-menu-item index="/system/admin">管理员管理</el-menu-item>
         <el-menu-item index="/system/permission">权限管理</el-menu-item>
         <el-menu-item index="/system/info">系统信息</el-menu-item>
-        <el-menu-item index="/system/network">网络配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
         <el-menu-item index="/system/service">服务管理</el-menu-item>
         <el-menu-item index="/system/whitelist">白名单配置</el-menu-item>
         <el-menu-item index="/system/ntp">NTP时间源管理</el-menu-item>
         <el-menu-item index="/system/snmp">SNMP管理<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
         <el-menu-item index="/system/syslog">Syslog配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
         <el-menu-item index="/system/pool">连接池配置</el-menu-item>
-        <el-menu-item index="/system/detect">一键检测</el-menu-item>
+        <el-menu-item index="/system/detect">一键检测<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
         <el-menu-item index="/system/config">系统配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
+        <el-menu-item index="/system/ha">高可用配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
       </el-sub-menu>
     </el-menu>
 
@@ -62,7 +73,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import {
-  Monitor, Grid, Edit, Tools, Fold, Expand
+  Monitor, Grid, Edit, Connection, Tools, Fold, Expand
 } from '@element-plus/icons-vue'
 
 defineProps({
@@ -75,8 +86,14 @@ const route = useRoute()
 const activeMenu = computed(() => {
   if (route.path.startsWith('/key/manage')) return '/key/manage'
   if (route.path.startsWith('/application')) return '/application'
+  if (route.path.startsWith('/network/interface')) return '/network/interface'
+  if (route.path.startsWith('/system/network')) return '/network/interface'
+  if (route.path.startsWith('/network/route')) return '/network/route'
   if (route.path.startsWith('/system/config')) return '/system/config'
   if (route.path.startsWith('/system/general')) return '/system/config'
+  if (route.path.startsWith('/system/ha')) return '/system/ha'
+  if (route.path.startsWith('/system/hot-standby')) return '/system/ha'
+  if (route.path.startsWith('/system/cluster')) return '/system/ha'
   return route.path
 })
 </script>

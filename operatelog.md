@@ -1,5 +1,44 @@
 # 操作日志
 
+## 2026-05-27（集群 / 高可用 · 业务逻辑纠正）
+
+- **`src/utils/systemCluster.js`**：授权码改为 32 位十六进制随机串，集群级 `authCode` 创建时生成；新增 `buildClusterDeviceRows`、节点角色判断辅助函数。
+- **`src/views/system/ClusterConfig.vue`**：创建集群后展示/复制授权码；子节点加入校验 32 位授权码与中心一致；已建集群时可 **添加子节点**；子节点操作 **数据同步**（全量，状态：数据同步中→已同步）、**删除**（踢出集群）；中心节点 **授权码** 查看；修正加入逻辑（须已存在集群）。
+- **`src/utils/systemHa.js`**：负载均衡策略默认 `wrr`，补充 rr/wrr/lc/wlc/lblc/lblcr/dh/sh 选项；移除持久化 `clusterDevices`。
+- **`src/views/system/HaConfig.vue`**：集群设备信息列改为集群 IP、服务端口，数据源自集群管理节点列表；无数据时引导至集群配置 Tab。
+
+## 2026-05-27（网络配置 · 独立父菜单与路由配置）
+
+- **`src/components/layout/Sidebar.vue`**：**网络配置** 提升为与 **系统管理** 同级父菜单（位于系统管理上方），子菜单 **接口管理**、**路由配置**；从系统管理中移除原网络配置项。
+- **`src/router/index.js`**：新增 `/network/interface`（接口管理）、`/network/route`（路由配置）；`/system/network` 重定向至接口管理。
+- **`src/views/system/NetworkConfig.vue`**：面包屑改为「网络配置 / 接口管理 / {页签}」；路由路径改为 `/network/interface`。
+- **`src/views/network/RouteConfig.vue`**（新）：路由配置列表——添加/批量删除、表格（IP类型、路由类型、目的路由、子网掩码、网关、网络接口、状态、操作）；系统路由不可选/不可编辑；分页；添加/编辑弹窗。
+- **`src/utils/networkRoute.js`**（新）：路由数据读写及默认系统路由演示数据。
+
+## 2026-05-27（高可用配置 · Tab 合并热备/集群）
+
+- **`src/views/system/HaManage.vue`**（新）：高可用配置页签容器，含 **高可用配置**、**热备管理**、**集群配置** 三个 Tab；面包屑「系统管理 / 高可用配置 / {页签}」；支持 `?tab=hot-standby`、`?tab=cluster`。
+- **`src/views/system/HaConfig.vue`**、**`HotStandbyManage.vue`**、**`ClusterConfig.vue`**：移除独立 `page-card` 外层，作为 Tab 子面板嵌入。
+- **`src/router/index.js`**：`/system/ha` 指向 `HaManage`；原 `/system/hot-standby`、`/system/cluster` 重定向至对应 Tab。
+- **`src/components/layout/Sidebar.vue`**：侧边栏仅保留 **高可用配置** 一项菜单。
+
+## 2026-05-27（高可用配置 · 双机热备布局）
+
+- **`src/views/system/HaConfig.vue`**：双机热备区按参考图调整——左侧分区标题（节点信息/绑定内外网网口/模式）+ 右侧灰色内容区；内外网绑定首行双列（网口 + 虚拟IP），次行虚拟路由ID及说明；外网虚拟IP 必填标识；集群设备信息改为同款左侧标题布局。
+
+## 2026-05-27（系统管理 · 高可用 / 热备 / 集群）
+
+- **`src/views/system/HaConfig.vue`**（新）：高可用配置——开关开启后可选类型（双机热备、集群内置/外置负载均衡）；双机热备含本机角色、节点信息、内外网绑定分组、抢占/非抢占模式及 VRID 联动；内置集群含网络/虚拟 IP/端口/协议/策略及集群设备表；应用/重置，`sessionStorage` 持久化。
+- **`src/views/system/HotStandbyManage.vue`**（新）：热备管理——刷新按钮；表格列角色/节点ID/节点IP/加入时间/状态（初始化、数据同步中、活动、异常）及状态色点。
+- **`src/views/system/ClusterConfig.vue`**（新）：集群配置——未建集群时「创建集群」「加入集群」；创建/加入弹窗表单；建集群后展示节点表、解散集群、授权码查看。
+- **`src/utils/systemHa.js`**、**`systemHotStandby.js`**、**`systemCluster.js`**（新）：配置与节点数据读写。
+- **`src/router/index.js`**：注册 `/system/ha`、`/system/hot-standby`、`/system/cluster`。
+- **`src/components/layout/Sidebar.vue`**：系统管理下增加上述三项菜单。
+
+## 2026-05-27（系统配置 · 证书校验开关与接口鉴权一致）
+
+- **`src/views/system/general/SystemCertValidationConfig.vue`**：**启用证书合法性校验** 由 `el-checkbox` 改为 `el-switch`（`inline-prompt`，启用/关闭文案）；布局改用 `control-row`；保存方式改为点击 **保存配置** 按钮提交（与接口鉴权页签一致）；移除重置按钮及勾选即时保存逻辑；提示文案去掉「无需再点击下方提交按钮」说明。
+
 ## 2026-05-27（系统配置 · 鉴权方式问号位置）
 
 - **`src/views/system/general/SystemApiAuthConfig.vue`**：鉴权方式项使用 `input-with-help` 布局，固定输入框宽度，问号图标紧跟输入框右侧显示。

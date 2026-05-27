@@ -65,15 +65,15 @@ watch(activeTab, (val) => {
   const cur = tabFromRoute()
   if (val === cur) return
   router.replace({
-    path: '/system/network',
+    path: '/network/interface',
     query: val === 'port' ? {} : { tab: val }
   })
 })
 
 watchEffect(() => {
   setPageBreadcrumbItems([
-    { label: '系统管理' },
     { label: '网络配置' },
+    { label: '接口管理' },
     { label: tabCopy[activeTab.value] }
   ])
 })

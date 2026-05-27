@@ -148,14 +148,28 @@ const routes = [
       breadcrumb: [{ label: '系统管理' }, { label: '系统信息' }]
     }
   },
+  // 网络配置 - 接口管理（网口/子网口/聚合/VLAN）
   {
-    path: '/system/network',
-    name: 'NetworkConfig',
+    path: '/network/interface',
+    name: 'NetworkInterface',
     component: () => import('@/views/system/NetworkConfig.vue'),
     meta: {
-      title: '网络配置',
-      breadcrumb: [{ label: '系统管理' }, { label: '网络配置' }]
+      title: '接口管理',
+      dynamicBreadcrumb: true
     }
+  },
+  {
+    path: '/network/route',
+    name: 'NetworkRoute',
+    component: () => import('@/views/network/RouteConfig.vue'),
+    meta: {
+      title: '路由配置',
+      breadcrumb: [{ label: '网络配置' }, { label: '路由配置' }]
+    }
+  },
+  {
+    path: '/system/network',
+    redirect: '/network/interface'
   },
   {
     path: '/system/service',
@@ -233,6 +247,24 @@ const routes = [
   {
     path: '/system/general/api-auth',
     redirect: { path: '/system/config', query: { tab: 'api-auth' } }
+  },
+  // 系统管理 - 高可用配置（高可用 / 热备 / 集群 Tab）
+  {
+    path: '/system/ha',
+    name: 'HaManage',
+    component: () => import('@/views/system/HaManage.vue'),
+    meta: {
+      title: '高可用配置',
+      dynamicBreadcrumb: true
+    }
+  },
+  {
+    path: '/system/hot-standby',
+    redirect: { path: '/system/ha', query: { tab: 'hot-standby' } }
+  },
+  {
+    path: '/system/cluster',
+    redirect: { path: '/system/ha', query: { tab: 'cluster' } }
   },
   // 系统管理 - 一键检测：服务接口（证书/签名/验签）+ 加密卡 + 汇总
   {
