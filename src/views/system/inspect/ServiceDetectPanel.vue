@@ -1,8 +1,7 @@
 <template>
   <div class="service-detect-panel">
     <el-alert type="warning" :closable="false" show-icon class="service-detect-panel__alert">
-      检测前请上传 <strong>CA 根证</strong> 和 <strong>证书管理</strong> 里面的证书。密码机本体与密码卡健康请至
-      <strong>设备自检</strong> 页签。
+      检测前请上传 <strong>CA 根证</strong> 和 <strong>证书管理</strong> 里面的证书。
     </el-alert>
 
     <div class="inspect-config-panel">
@@ -268,7 +267,7 @@ function runDetect () {
       appendInspectHistory({
         inspectType: 'service',
         trigger: 'manual',
-        triggerLabel: '手动',
+        triggerLabel: '手动检测',
         scopeMode: 'all',
         scopeItems: [],
         overallStatus: total - passed > 0 ? '异常' : '正常',
@@ -280,6 +279,7 @@ function runDetect () {
         summary: { ...summary.value }
       })
       emit('history-updated')
+      ElMessage.success('业务检测已完成')
     }
   }, 220)
 }

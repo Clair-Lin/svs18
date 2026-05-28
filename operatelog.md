@@ -1,5 +1,49 @@
 # 操作日志
 
+## 2026-05-28（密钥管理 · 0029 PQC 密钥类型细化）
+
+- **`KeyManage0029Panel.vue`**：PQC 体系由 4 类算法改为 **16 种独立密钥类型**（ML_DSA_44/65/87、SLH_DSA_SHA2_*、AIGIS_SIG1～3、LMS_SM3_H5_*）；生成密钥时 **无密钥长度选择**；查询区密码算法筛选项同步；列表/详情 PQC 行长度显示「—」。
+
+## 2026-05-28（密钥管理 · 0019 导入容器走 UKEY）
+
+- **`KeyManageSecurityModals.vue`**：UKEY 弹窗支持 **备份 / 导入容器** 两种模式（控件检测 → 选择 UKEY → 确定）；导入提示「请选择用于导入容器的 UKEY」。
+- **`KeyManage0019Panel.vue`**：**导入容器** 改为调用 `openUkeyImport`，与行内 **备份** 共用同一 UKEY 流程。
+
+## 2026-05-28（密钥管理 · 0019 去除 PIN 与可导出选项）
+
+- **`KeyManage0019Panel.vue`**：生成容器表单移除 **PIN** 字段及校验；新增 **是否可导出**（是/否，对应 `uiExportFlag` 0/1）；列表与详情展示可导出状态；操作列移除 **查看认证凭据**。
+- **`KeyManageSecurityModals.vue`**：移除 0019 专用的 `openViewAuthCredentialsFlow`（PIN 认证凭据）流程。
+
+## 2026-05-28（设备自检详情 · 对齐业务检测展示样式）
+
+- **`DeviceInspectDetail.vue`**：检测内容区复用 `InspectResultsPanel`（统计卡片、检测对象条、分类折叠明细），与业务检测一致；顶部保留基本信息描述列表；隐藏详情页进度条。
+
+## 2026-05-28（检测中心 · 修复无法进入）
+
+- **`ServiceDetectPanel.vue`**：移除对不存在的 `InspectDetailContent.vue`、`mapServiceResultsToDetailItems` 的引用，恢复使用 `InspectResultsPanel`，修复检测中心菜单点击后白屏/无响应。
+
+## 2026-05-28（检测中心 · 清理废弃面板）
+
+- **删除** `InspectSchedulePanel.vue`、`InspectHistoryPanel.vue`：功能已并入 `DeviceInspectPanel.vue`，无代码引用，删除不影响现有界面。
+- **`README.md`**：检测中心说明与路由表同步为当前两页签结构。
+
+## 2026-05-28（设备自检 · 系统资源检测项）
+
+- **`inspectCenter.js`**：移除笼统「设备自检」项；新增 **网络、硬盘、内存、CPU** 四项（`system-resource` 分类），检测详情按设计稿展示具体指标；各算法/硬件项补充对应详情文案。
+
+## 2026-05-28（设备自检 · 列表两端到边修复）
+
+- **`InspectCenter.vue`**：设备自检页签时 `page-card--list-flush` 取消卡片左右内边距，Tab 头保留内边距；解除 `el-tab-pane` 裁剪。
+- **`DeviceInspectPanel.vue`**：筛选/按钮区单独内边距；表格 `width:100%` + `table-layout:fixed` 四列等分铺满；移除无效负边距方案。
+
+## 2026-05-28（设备自检 · 列表/详情/自动检测整合）
+
+- **`DeviceInspectPanel.vue`**：整合原「设备自检」「定时策略」「执行记录」为单页——筛选（检测类型/结果/时间）、**立即检测**、**自动检测**、记录表格与分页；检测完成后写入记录并跳转详情。
+- **`DeviceInspectDetail.vue`**（新）：设备自检详情页——基本信息（自检时间、检测类型、检测结果）+ 检测内容表格（序号/检测项/状态/检测详情/异常说明）；返回至设备自检列表。
+- **`InspectCenter.vue`**：移除「定时策略」「执行记录」页签，仅保留「业务检测」「设备自检」；`?tab=schedule|history` 重定向至设备自检。
+- **`inspectCenter.js`**：自动检测策略改为间隔频率（数值 + 分钟/小时/天）；新增 `detectTypeLabel`、`overallResultLabel`、`filterDeviceHistory`、`seedDeviceInspectHistoryIfEmpty` 等；演示记录种子数据。
+- **`router/index.js`**：新增 `/system/inspect/device-detail` 详情路由。
+
 ## 2026-05-27（设备自检 · 自检项目提示）
 
 - **`DeviceInspectPanel.vue`**：移除内置密码卡只读状态条；改为 **info** 提示框单行展示全部自检项目（顿号分隔）。

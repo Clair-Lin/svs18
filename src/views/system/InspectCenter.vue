@@ -1,6 +1,6 @@
 <template>
   <div class="inspect-center">
-    <div class="page-card">
+    <div class="page-card" :class="{ 'page-card--list-flush': activeTab === 'device' }">
       <el-tabs v-model="activeTab" class="inspect-center-tabs">
         <el-tab-pane name="service" lazy>
           <template #label>业务检测</template>
@@ -8,15 +8,7 @@
         </el-tab-pane>
         <el-tab-pane name="device" lazy>
           <template #label>设备自检</template>
-          <DeviceInspectPanel @history-updated="onHistoryUpdated" />
-        </el-tab-pane>
-        <el-tab-pane name="schedule" lazy>
-          <template #label>定时策略</template>
-          <InspectSchedulePanel :history-version="historyVersion" />
-        </el-tab-pane>
-        <el-tab-pane name="history" lazy>
-          <template #label>执行记录</template>
-          <InspectHistoryPanel :refresh-key="historyVersion" />
+          <DeviceInspectPanel :key="historyVersion" @history-updated="onHistoryUpdated" />
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -29,16 +21,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { setPageBreadcrumbItems } from '@/composables/pageBreadcrumb'
 import ServiceDetectPanel from './inspect/ServiceDetectPanel.vue'
 import DeviceInspectPanel from './inspect/DeviceInspectPanel.vue'
-import InspectSchedulePanel from './inspect/InspectSchedulePanel.vue'
-import InspectHistoryPanel from './inspect/InspectHistoryPanel.vue'
-
-const TAB_NAMES = ['service', 'device', 'schedule', 'history']
+const TAB_NAMES = ['service', 'device']
 
 const tabCopy = {
   service: '业务检测',
-  device: '设备自检',
-  schedule: '定时策略',
-  history: '执行记录'
+  device: '设备自检'
 }
 
 const route = useRoute()
@@ -48,6 +35,7 @@ const historyVersion = ref(0)
 
 function tabFromRoute () {
   const t = route.query.tab
+  if (t === 'schedule' || t === 'history') return 'device'
   return TAB_NAMES.includes(t) ? t : 'service'
 }
 
@@ -88,6 +76,21 @@ watchEffect(() => {
 @import '@/styles/variables.scss';
 
 .inspect-center {
+  .page-card--list-flush {
+    padding-left: 0;
+    padding-right: 0;
+
+    :deep(.el-tabs__header) {
+      padding-left: $spacing-lg;
+      padding-right: $spacing-lg;
+    }
+
+    :deep(.el-tabs__content),
+    :deep(.el-tab-pane) {
+      overflow: visible;
+    }
+  }
+
   :deep(.el-tabs__header) {
     margin-bottom: 20px;
   }

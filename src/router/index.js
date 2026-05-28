@@ -266,13 +266,22 @@ const routes = [
     path: '/system/cluster',
     redirect: { path: '/system/ha', query: { tab: 'cluster' } }
   },
-  // 系统管理 - 检测中心：业务检测 / 设备自检 / 定时策略 / 执行记录
+  // 系统管理 - 检测中心：业务检测 / 设备自检（含执行记录与自动检测设置）
   {
     path: '/system/inspect',
     name: 'InspectCenter',
     component: () => import('@/views/system/InspectCenter.vue'),
     meta: {
       title: '检测中心',
+      dynamicBreadcrumb: true
+    }
+  },
+  {
+    path: '/system/inspect/device-detail',
+    name: 'DeviceInspectDetail',
+    component: () => import('@/views/system/inspect/DeviceInspectDetail.vue'),
+    meta: {
+      title: '设备自检详情',
       dynamicBreadcrumb: true
     }
   },

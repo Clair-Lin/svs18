@@ -18,10 +18,12 @@
             <el-option label="SM2" value="SM2" />
             <el-option label="RSA" value="RSA" />
             <el-option label="SM9" value="SM9" />
-            <el-option label="ML-DSA" value="ML-DSA" />
-            <el-option label="SLH-DSA-SHA2" value="SLH-DSA-SHA2" />
-            <el-option label="AIGIS-SIG" value="AIGIS-SIG" />
-            <el-option label="LMS-SM3" value="LMS-SM3" />
+            <el-option
+              v-for="opt in PQC_KEY_OPTIONS"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
             <el-option label="SM4" value="SM4" />
             <el-option label="3DES" value="3DES" />
             <el-option label="AES" value="AES" />
@@ -232,16 +234,6 @@
               <el-checkbox :label="PQC_KEY_USAGE">{{ PQC_KEY_USAGE }}</el-checkbox>
             </el-checkbox-group>
           </el-form-item>
-          <el-form-item label="密钥长度" prop="keySize">
-            <el-select v-model="keyForm.keySize" style="width: 100%">
-              <el-option
-                v-for="size in availableSizes"
-                :key="size"
-                :label="String(size)"
-                :value="size"
-              />
-            </el-select>
-          </el-form-item>
           <el-form-item label="密钥访问口令" prop="password">
             <el-input
               v-model="keyForm.password"
@@ -319,7 +311,7 @@
           <span class="detail-p2-label">密钥用途</span>
           <span class="detail-p2-value">{{ currentKey.keyUsage }}</span>
         </div>
-        <div class="detail-p2-row">
+        <div v-if="!isPqcKeyRow(currentKey)" class="detail-p2-row">
           <span class="detail-p2-label">密钥长度</span>
           <span class="detail-p2-value">{{ currentKey.keyLength }}</span>
         </div>
@@ -373,12 +365,31 @@ const KEY_TYPE = {
   AES: 'AES',
   SM9_MASTER: 'SM9主密钥',
   SM9_IDENTITY: 'SM9标识密钥',
-  SM9_SHARD: 'SM9分片主密钥',
-  ML_DSA: 'ML-DSA',
-  SLH_DSA_SHA2: 'SLH-DSA-SHA2',
-  AIGIS_SIG: 'AIGIS-SIG',
-  LMS_SM3: 'LMS-SM3'
+  SM9_SHARD: 'SM9分片主密钥'
 }
+
+/** PQC 体系密钥：类型即算法变体，生成时无单独长度选择 */
+const PQC_KEY_OPTIONS = [
+  { label: 'ML_DSA_44', value: 'ML_DSA_44' },
+  { label: 'ML_DSA_65', value: 'ML_DSA_65' },
+  { label: 'ML_DSA_87', value: 'ML_DSA_87' },
+  { label: 'SLH_DSA_SHA2_128s', value: 'SLH_DSA_SHA2_128s' },
+  { label: 'SLH_DSA_SHA2_128f', value: 'SLH_DSA_SHA2_128f' },
+  { label: 'SLH_DSA_SHA2_192s', value: 'SLH_DSA_SHA2_192s' },
+  { label: 'SLH_DSA_SHA2_192f', value: 'SLH_DSA_SHA2_192f' },
+  { label: 'SLH_DSA_SHA2_256s', value: 'SLH_DSA_SHA2_256s' },
+  { label: 'SLH_DSA_SHA2_256f', value: 'SLH_DSA_SHA2_256f' },
+  { label: 'AIGIS_SIG1', value: 'AIGIS_SIG1' },
+  { label: 'AIGIS_SIG2', value: 'AIGIS_SIG2' },
+  { label: 'AIGIS_SIG3', value: 'AIGIS_SIG3' },
+  { label: 'LMS_SM3_H5_W1', value: 'LMS_SM3_H5_W1' },
+  { label: 'LMS_SM3_H5_W2', value: 'LMS_SM3_H5_W2' },
+  { label: 'LMS_SM3_H5_W4', value: 'LMS_SM3_H5_W4' },
+  { label: 'LMS_SM3_H5_W8', value: 'LMS_SM3_H5_W8' },
+  { label: 'LMS_SM3_H5_W8_H5_W8', value: 'LMS_SM3_H5_W8_H5_W8' }
+]
+
+const PQC_KEY_TYPES = PQC_KEY_OPTIONS.map((o) => o.value)
 
 /** 对称密钥类型（块密码，仅加密解密） */
 const SYMMETRIC_KEY_TYPES = [KEY_TYPE.SM4, KEY_TYPE.TDES, KEY_TYPE.AES]
@@ -410,37 +421,17 @@ const KEY_TYPE_GROUPS = [
   },
   {
     label: 'PQC体系密钥',
-    options: [
-      { label: 'ML-DSA', value: KEY_TYPE.ML_DSA },
-      { label: 'SLH-DSA-SHA2', value: KEY_TYPE.SLH_DSA_SHA2 },
-      { label: 'AIGIS-SIG', value: KEY_TYPE.AIGIS_SIG },
-      { label: 'LMS-SM3', value: KEY_TYPE.LMS_SM3 }
-    ]
+    options: PQC_KEY_OPTIONS
   }
 ]
 
 const IBC_KEY_TYPES = [KEY_TYPE.SM9_MASTER, KEY_TYPE.SM9_IDENTITY, KEY_TYPE.SM9_SHARD]
-
-const PQC_KEY_TYPES = [
-  KEY_TYPE.ML_DSA,
-  KEY_TYPE.SLH_DSA_SHA2,
-  KEY_TYPE.AIGIS_SIG,
-  KEY_TYPE.LMS_SM3
-]
 
 /** SM9 固定密钥用途 */
 const SM9_KEY_USAGE = 'SM9短签名'
 
 /** PQC 固定密钥用途 */
 const PQC_KEY_USAGE = '签名验签'
-
-/** PQC 各算法可选密钥长度/参数 */
-const PQC_SIZES_BY_KEY_TYPE = {
-  [KEY_TYPE.ML_DSA]: ['44', '65', '87'],
-  [KEY_TYPE.SLH_DSA_SHA2]: ['128s', '128f', '192s', '192f', '256s', '256f'],
-  [KEY_TYPE.AIGIS_SIG]: ['SIG1', 'SIG2', 'SIG3'],
-  [KEY_TYPE.LMS_SM3]: ['H5_W1', 'H5_W2', 'H5_W4', 'H5_W8', 'H5_W8_H5_W8']
-}
 
 function resolveKeyAlgorithm (keyType) {
   if (IBC_KEY_TYPES.includes(keyType)) return 'SM9'
@@ -456,6 +447,10 @@ function resolveKeyAlgorithm (keyType) {
 
 function isIbcKeyRow (row) {
   return row && IBC_KEY_TYPES.includes(row.keyType)
+}
+
+function isPqcKeyRow (row) {
+  return row && PQC_KEY_TYPES.includes(row.keyType)
 }
 
 function findSm9MasterByRef (masterKeyRef) {
@@ -522,10 +517,7 @@ const formRules = computed(() => {
     password: PASSWORD_RULES
   }
   if (isPqcKeyType.value) {
-    return {
-      ...base,
-      keySize: [{ required: true, message: '请选择密钥长度', trigger: 'change' }]
-    }
+    return base
   }
   if (!isIbcKeyType.value) {
     return {
@@ -580,12 +572,7 @@ const SM9_SYSTEM_KEY_LENGTH = '256'
 
 const formKeyAlgorithm = computed(() => resolveKeyAlgorithm(keyForm.keyType))
 
-const availableSizes = computed(() => {
-  if (isPqcKeyType.value) {
-    return PQC_SIZES_BY_KEY_TYPE[keyForm.keyType] ?? []
-  }
-  return KEY_SIZES_BY_ALGORITHM[formKeyAlgorithm.value] ?? [256]
-})
+const availableSizes = computed(() => KEY_SIZES_BY_ALGORITHM[formKeyAlgorithm.value] ?? [256])
 
 /** 对称密钥体系仅支持加密解密 */
 const isSymmetricKeyType = computed(() => SYMMETRIC_KEY_TYPES.includes(keyForm.keyType))
@@ -617,8 +604,6 @@ function applyKeyTypeDefaults () {
   if (isPqcKeyType.value) {
     resetIbcFields()
     keyForm.usage = [PQC_KEY_USAGE]
-    const sizes = PQC_SIZES_BY_KEY_TYPE[keyForm.keyType]
-    keyForm.keySize = sizes?.length ? sizes[0] : ''
     return
   }
   resetIbcFields()
@@ -715,7 +700,7 @@ function buildPqcKeyRow (now, addedTime) {
     keyAlgorithm: keyForm.keyType,
     keyType: keyForm.keyType,
     keyUsage: PQC_KEY_USAGE,
-    keyLength: String(keyForm.keySize),
+    keyLength: '—',
     addedTime,
     addedTimeMs: now
   }
@@ -725,10 +710,10 @@ const keyList = ref([
   {
     index: 106,
     keyId: '1763200300666004',
-    keyAlgorithm: 'ML-DSA',
-    keyType: KEY_TYPE.ML_DSA,
+    keyAlgorithm: 'ML_DSA_65',
+    keyType: 'ML_DSA_65',
     keyUsage: PQC_KEY_USAGE,
-    keyLength: '65',
+    keyLength: '—',
     addedTime: '2025-11-15 12:00:00',
     addedTimeMs: 1763185200000
   },
@@ -860,7 +845,7 @@ async function handleCreateKey () {
   const fieldsToValidate = isIbcKeyType.value
     ? getIbcValidateFields()
     : isPqcKeyType.value
-      ? ['keyType', 'usage', 'keySize', 'password']
+      ? ['keyType', 'usage', 'password']
       : ['keyType', 'usage', 'keySize', 'password']
   try {
     for (const field of fieldsToValidate) {

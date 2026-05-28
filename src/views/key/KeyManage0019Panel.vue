@@ -10,14 +10,12 @@
       <el-table-column prop="keyAlgorithm" label="密钥算法" width="110" />
       <el-table-column prop="keyLength" label="密钥长度" width="100" align="center" />
       <el-table-column prop="usageLabel" label="用途" width="120" />
+      <el-table-column prop="exportableLabel" label="是否可导出" width="110" align="center" />
       <el-table-column prop="addedTime" label="添加时间" width="180" />
-      <el-table-column label="操作" fixed="right" width="220">
+      <el-table-column label="操作" fixed="right" width="140">
         <template #default="{ row }">
           <el-button type="primary" size="small" link @click="handleDetail(row)">详情</el-button>
           <el-button type="primary" size="small" link @click="handleBackup(row)">备份</el-button>
-          <el-button type="primary" size="small" link @click="handleViewAuthCredentials(row)">
-            查看认证凭据
-          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -64,14 +62,16 @@
             <el-radio value="签名验签">签名验签</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="PIN" prop="password">
-          <el-input
-            v-model="keyForm.password"
-            type="password"
-            placeholder="SAF_Login 认证凭据"
-            show-password
-            autocomplete="new-password"
-          />
+        <el-form-item label="是否可导出" prop="exportFlag">
+          <el-radio-group v-model="keyForm.exportFlag">
+            <el-radio
+              v-for="opt in EXPORT_FLAG_OPTIONS"
+              :key="opt.value"
+              :value="opt.value"
+            >
+              {{ opt.label }}
+            </el-radio>
+          </el-radio-group>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -101,6 +101,10 @@
           <span class="detail-p2-value">{{ currentKey.usageLabel }}</span>
         </div>
         <div class="detail-p2-row">
+          <span class="detail-p2-label">是否可导出</span>
+          <span class="detail-p2-value">{{ currentKey.exportableLabel }}</span>
+        </div>
+        <div class="detail-p2-row">
           <span class="detail-p2-label">添加时间</span>
           <span class="detail-p2-value">{{ currentKey.addedTime }}</span>
         </div>
@@ -112,7 +116,12 @@
 <script setup>
 import { ref, reactive, computed, inject } from 'vue'
 import { ElMessage } from 'element-plus'
+import { EXPORT_FLAG_OPTIONS } from '@/constants/gmt0019.js'
 import { KEY_MANAGE_SECURITY_KEY } from './keyManageSecurityKey.js'
+
+function exportFlagToLabel (flag) {
+  return flag === 1 ? '是' : '否'
+}
 const currentPage = ref(1)
 const pageSize = ref(10)
 const createDialogVisible = ref(false)
@@ -127,7 +136,7 @@ const keyForm = reactive({
   keyAlgorithm: 'SM2',
   keyLength: 256,
   usageLabel: '签名验签',
-  password: ''
+  exportFlag: 0
 })
 
 /** 生成容器：各算法可选密钥长度（位） */
@@ -147,10 +156,7 @@ const keyRules = {
   containerName: [{ required: true, message: '请输入容器名', trigger: 'blur' }],
   keyAlgorithm: [{ required: true, message: '请选择密钥算法', trigger: 'change' }],
   keyLength: [{ required: true, message: '请选择密钥长度', trigger: 'change' }],
-  password: [
-    { required: true, message: '请输入 PIN', trigger: 'blur' },
-    { min: 6, max: 32, message: '长度在 6 到 32 个字符', trigger: 'blur' }
-  ]
+  exportFlag: [{ required: true, message: '请选择是否可导出', trigger: 'change' }]
 }
 
 const keyList = ref([
@@ -160,6 +166,8 @@ const keyList = ref([
     keyAlgorithm: 'SM2',
     keyLength: 256,
     usageLabel: '签名验签',
+    exportFlag: 1,
+    exportableLabel: '是',
     publicKeyContent: '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoEcz1UBgi0DQgAE6f4Mwl7F9qJQxM7kR8I5f2Q1c0hN\np0j4R1sD8n7xS2t9M6kY7h1Qxw3aD2Y9V6t8r1L5j2f9m0v8q3x2Yw==\n-----END PUBLIC KEY-----',
     addedTime: '2026-04-30 10:00:00'
   },
@@ -169,6 +177,8 @@ const keyList = ref([
     keyAlgorithm: 'SM2',
     keyLength: 256,
     usageLabel: '签名验签',
+    exportFlag: 0,
+    exportableLabel: '否',
     publicKeyContent: '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoEcz1UBgi0DQgAE8r2Jm6kN9xS3p4Qw7tY2v1c0hN5L\nq8p3D1sF6n9xT2v7B5kY4h1Qxw3aD2Y9V6t8r1L5j2f9m0v8q3x2Yw==\n-----END PUBLIC KEY-----',
     addedTime: '2026-04-30 10:01:00'
   }
@@ -186,7 +196,7 @@ const handleCreate = () => {
     keyAlgorithm: 'SM2',
     keyLength: 256,
     usageLabel: '签名验签',
-    password: ''
+    exportFlag: 0
   })
   createDialogVisible.value = true
 }
@@ -198,7 +208,22 @@ async function handleCreateKey () {
     return
   }
   creating.value = true
+  const name = keyForm.containerName.trim()
   setTimeout(() => {
+    const now = new Date()
+    const pad = (n) => String(n).padStart(2, '0')
+    const addedTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
+    keyList.value.unshift({
+      keyId: name,
+      containerName: name,
+      keyAlgorithm: keyForm.keyAlgorithm,
+      keyLength: keyForm.keyLength,
+      usageLabel: keyForm.usageLabel,
+      exportFlag: keyForm.exportFlag,
+      exportableLabel: exportFlagToLabel(keyForm.exportFlag),
+      publicKeyContent: '-----BEGIN PUBLIC KEY-----\n（原型演示）\n-----END PUBLIC KEY-----',
+      addedTime
+    })
     creating.value = false
     createDialogVisible.value = false
     ElMessage.success('容器生成成功（通用密码服务接口 GM/T 0019-2023 原型）')
@@ -206,7 +231,7 @@ async function handleCreateKey () {
 }
 
 const handleImportContainer = () => {
-  ElMessage.info('导入容器：请选择容器备份文件（原型演示）')
+  securityModalsRef.value?.openUkeyImport?.()
 }
 
 const handleDetail = (row) => {
@@ -216,10 +241,6 @@ const handleDetail = (row) => {
 
 const handleBackup = (row) => {
   securityModalsRef.value?.openUkeyBackup?.(row)
-}
-
-const handleViewAuthCredentials = (row) => {
-  securityModalsRef.value?.openViewAuthCredentialsFlow?.(row)
 }
 </script>
 

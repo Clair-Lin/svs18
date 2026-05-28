@@ -134,9 +134,7 @@ src/
 | 页签 | 说明 |
 |------|------|
 | **业务检测** | 服务接口检测（需证书）；不含密码卡（避免与设备自检重复） |
-| **设备自检** | 固定执行全部 8 项（随机数、SM1–SM4、密钥完整性、内置密码卡、设备自检等） |
-| **定时策略** | 设备自检定时任务（每天/每周）；失败告警预留 |
-| **执行记录** | 手动/定时执行历史与详情 |
+| **设备自检** | 立即检测、自动检测设置、检测记录列表与详情（含原定时策略与执行记录能力） |
 
 检测前业务检测需上传 CA 根证与证书管理中的证书；结果支持导出报告（原型占位）。
 
@@ -169,7 +167,8 @@ src/
 | `/cert/ca` | CACert | CA 根证管理 | CA 证书列表与搜索 |
 | `/cert/ca/chain/:id` | CACertChain | CA 证书链 | 证书链详情页 |
 | `/system/whitelist` | WhitelistConfig | 白名单配置 | IP 白名单访问控制 |
-| `/system/inspect` | InspectCenter | 检测中心 | 业务检测、设备自检、定时策略、执行记录 |
+| `/system/inspect` | InspectCenter | 检测中心 | 业务检测、设备自检 |
+| `/system/inspect/device-detail` | DeviceInspectDetail | 设备自检详情 | 单次检测明细 |
 | `/system/detect` | — | （重定向） | 重定向至 `/system/inspect?tab=service` |
 | `/system/info` | SystemInfo | 系统信息 | 设备与网络信息 |
 | `/system/network` | NetworkConfig | 网络配置 | 网络参数设置 |

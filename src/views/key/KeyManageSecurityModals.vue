@@ -16,7 +16,7 @@
           <p class="ukey-loading-text">控件检测中...</p>
         </div>
         <div v-else class="ukey-ready">
-          <p class="ukey-hint">请选择用于备份的 UKEY：</p>
+          <p class="ukey-hint">{{ ukeyHintText }}</p>
           <el-radio-group v-model="selectedUkeyId" class="ukey-radio-group">
             <el-radio v-for="u in ukeyOptions" :key="u.id" :label="u.id" class="ukey-radio">
               {{ u.label }}
@@ -30,7 +30,7 @@
           type="primary"
           :disabled="ukeyConfirmDisabled"
           :loading="ukeySubmitting"
-          @click="confirmUkeyBackup"
+          @click="confirmUkeyAction"
         >
           确定
         </el-button>
@@ -77,8 +77,16 @@ const ukeyDialogVisible = ref(false)
 const ukeyPhase = ref('detecting')
 const ukeySubmitting = ref(false)
 const selectedUkeyId = ref('')
-const pendingBackupRow = ref(null)
+/** @type {import('vue').Ref<'backup' | 'import'>} */
+const ukeyMode = ref('backup')
+const pendingUkeyRow = ref(null)
 let ukeyDetectTimer = null
+
+const ukeyHintText = computed(() => (
+  ukeyMode.value === 'import'
+    ? '请选择用于导入容器的 UKEY：'
+    : '请选择用于备份的 UKEY：'
+))
 
 const ukeyOptions = ref([
   { id: 'ukey-1', label: 'UKEY-01（SN: 8A2F-9012-3B4C）' },
@@ -101,12 +109,14 @@ function onUkeyDialogClosed () {
   clearUkeyTimer()
   ukeyPhase.value = 'detecting'
   selectedUkeyId.value = ''
-  pendingBackupRow.value = null
+  ukeyMode.value = 'backup'
+  pendingUkeyRow.value = null
   ukeySubmitting.value = false
 }
 
-function openUkeyBackup (row) {
-  pendingBackupRow.value = row
+function openUkeyFlow (mode, row = null) {
+  ukeyMode.value = mode
+  pendingUkeyRow.value = row
   ukeyPhase.value = 'detecting'
   selectedUkeyId.value = ''
   ukeyDialogVisible.value = true
@@ -118,22 +128,35 @@ function openUkeyBackup (row) {
   }, 1200)
 }
 
-function confirmUkeyBackup () {
-  const row = pendingBackupRow.value
-  if (!row || ukeyConfirmDisabled.value) return
+function openUkeyBackup (row) {
+  openUkeyFlow('backup', row)
+}
+
+function openUkeyImport () {
+  openUkeyFlow('import')
+}
+
+function confirmUkeyAction () {
+  if (ukeyConfirmDisabled.value) return
+  if (ukeyMode.value === 'backup' && !pendingUkeyRow.value) return
   ukeySubmitting.value = true
   setTimeout(() => {
     ukeySubmitting.value = false
     ukeyDialogVisible.value = false
-    const kid = row.keyId ?? ''
-    ElMessage.success(`密钥 ${kid} 已通过 UKEY 认证完成备份（原型演示）`)
+    if (ukeyMode.value === 'import') {
+      ElMessage.success('容器已通过 UKEY 认证完成导入（原型演示）')
+    } else {
+      const row = pendingUkeyRow.value
+      const kid = row?.keyId ?? row?.containerName ?? ''
+      ElMessage.success(`密钥 ${kid} 已通过 UKEY 认证完成备份（原型演示）`)
+    }
   }, 600)
 }
 
 const authDialogVisible = ref(false)
 const authSubmitting = ref(false)
 const adminPassword = ref('')
-/** @type {import('vue').Ref<'destroy' | 'viewPassword' | 'viewAuthCredentials' | null>} */
+/** @type {import('vue').Ref<'destroy' | 'viewPassword' | null>} */
 const authMode = ref(null)
 const pendingAuthRow = ref(null)
 
@@ -168,11 +191,6 @@ function openViewPasswordFlow (row) {
   openSecondaryAuth('viewPassword', row)
 }
 
-/** 0019 通用密码容器：查看 SAF_Login 认证凭据（PIN），与「查看密钥访问口令」同属敏感操作二次认证 */
-function openViewAuthCredentialsFlow (row) {
-  openSecondaryAuth('viewAuthCredentials', row)
-}
-
 function confirmAuth () {
   if (!adminPassword.value.trim()) {
     ElMessage.warning('请输入管理密码')
@@ -189,13 +207,6 @@ function confirmAuth () {
     const kid = row.keyId ?? ''
     if (mode === 'destroy') {
       ElMessage.success(`密钥 ${kid} 已通过二次认证并销毁（原型演示）`)
-    } else if (mode === 'viewAuthCredentials') {
-      const cname = row.containerName ?? kid
-      ElMessageBox.alert(
-        `容器「${cname}」的认证凭据（PIN，SAF_Login 原型演示）：Sv9#mK2@pL1`,
-        '认证凭据',
-        { confirmButtonText: '知道了' }
-      )
     } else {
       ElMessageBox.alert(
         `密钥 ${kid} 的访问口令（原型演示）：Kp9#xQ2@mL7`,
@@ -212,9 +223,9 @@ onBeforeUnmount(() => {
 
 defineExpose({
   openUkeyBackup,
+  openUkeyImport,
   openDestroyFlow,
-  openViewPasswordFlow,
-  openViewAuthCredentialsFlow
+  openViewPasswordFlow
 })
 </script>
 
