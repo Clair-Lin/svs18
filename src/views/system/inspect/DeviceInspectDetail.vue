@@ -1,43 +1,77 @@
 <template>
   <div class="device-inspect-detail">
     <header class="device-inspect-detail__head">
-      <el-button class="device-inspect-detail__back" link @click="goBack">
-        <el-icon><ArrowLeft /></el-icon>
+      <div class="device-inspect-detail__head-left">
+        <el-button class="device-inspect-detail__back" link @click="goBack">
+          <el-icon><ArrowLeft /></el-icon>
+        </el-button>
+        <h2 class="device-inspect-detail__title">设备自检详情</h2>
+      </div>
+      <el-button
+        v-if="record"
+        type="primary"
+        plain
+        :icon="Download"
+        @click="exportReport"
+      >
+        导出检测报告
       </el-button>
-      <h2 class="device-inspect-detail__title">设备自检详情</h2>
     </header>
 
     <template v-if="record">
-      <div class="page-card device-inspect-detail__meta">
-        <el-descriptions :column="3" border size="small">
-          <el-descriptions-item label="自检时间">
-            {{ record.finishedAt }}
-          </el-descriptions-item>
-          <el-descriptions-item label="检测类型">
-            {{ detectTypeLabel(record) }}
-          </el-descriptions-item>
-          <el-descriptions-item label="检测结果">
-            <span class="status-cell" :class="overallResultClass(record)">
+      <div class="page-card device-inspect-detail__section">
+        <div class="section-head">
+          <span class="section-bar" />
+          <span class="section-title">基本信息</span>
+        </div>
+        <div class="basic-info-row">
+          <div class="basic-info-item">
+            <span class="basic-info-item__label">自检时间</span>
+            <span class="basic-info-item__value">{{ record.finishedAt }}</span>
+          </div>
+          <div class="basic-info-item">
+            <span class="basic-info-item__label">检测类型</span>
+            <span class="basic-info-item__value">{{ detectTypeLabel(record) }}</span>
+          </div>
+          <div class="basic-info-item">
+            <span class="basic-info-item__label">检测结果</span>
+            <span
+              class="status-cell"
+              :class="overallResultClass(record)"
+            >
               <span class="status-dot" aria-hidden="true" />
               {{ overallResultLabel(record) }}
             </span>
-          </el-descriptions-item>
-        </el-descriptions>
+          </div>
+        </div>
       </div>
 
-      <div class="page-card device-inspect-detail__results">
-        <InspectResultsPanel
-          ref="resultsRef"
-          title="检测内容"
-          :detecting="false"
-          :summary="displaySummary"
-          :progress-shown="100"
-          :progress-status-type="progressStatusType"
-          :result-categories="displayCategories"
-          :stats="displayStats"
-          :show-export="false"
-          idle-hint=""
-        />
+      <div class="page-card device-inspect-detail__section">
+        <div class="section-head">
+          <span class="section-bar" />
+          <span class="section-title">检测内容</span>
+        </div>
+        <el-table :data="detailRows" border class="detail-table" size="small">
+          <el-table-column type="index" label="序号" width="64" align="center" />
+          <el-table-column prop="name" label="检测项" min-width="160" />
+          <el-table-column label="状态" width="100" align="center">
+            <template #default="{ row }">
+              <span
+                class="status-cell"
+                :class="row.status === '正常' ? 'is-on' : 'is-off'"
+              >
+                <span class="status-dot" aria-hidden="true" />
+                {{ row.status }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="detail" label="检测详情" min-width="280" show-overflow-tooltip />
+          <el-table-column label="异常说明" min-width="120">
+            <template #default="{ row }">
+              {{ row.abnormalDesc || '—' }}
+            </template>
+          </el-table-column>
+        </el-table>
       </div>
     </template>
 
@@ -46,23 +80,21 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect, onMounted } from 'vue'
+import { computed, watchEffect, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft } from '@element-plus/icons-vue'
-import InspectResultsPanel from '@/components/inspect/InspectResultsPanel.vue'
+import { ArrowLeft, Download } from '@element-plus/icons-vue'
 import { setPageBreadcrumbItems } from '@/composables/pageBreadcrumb'
 import {
   getInspectHistoryById,
   detectTypeLabel,
   overallResultLabel,
   overallResultClass,
-  groupDeviceResultsByCategory
+  downloadDeviceInspectReport
 } from '@/utils/inspectCenter'
 
 const route = useRoute()
 const router = useRouter()
-const resultsRef = ref(null)
 
 const recordId = computed(() => String(route.query.id || ''))
 const record = computed(() => {
@@ -70,52 +102,14 @@ const record = computed(() => {
   return getInspectHistoryById(recordId.value)
 })
 
-const displaySummary = computed(() => {
-  const r = record.value
-  if (!r) return null
-  if (r.summary) {
-    return {
-      ...r.summary,
-      time: r.summary.time || r.finishedAt,
-      targetLabel: r.summary.targetLabel || '本机 192.168.1.100 · 设备自检'
-    }
-  }
-  const failed = r.failedCount ?? 0
-  const passed = r.passedCount ?? 0
-  const total = r.itemCount ?? passed + failed
-  return {
-    total,
-    passed,
-    warning: 0,
-    failed,
-    time: r.finishedAt,
-    targetLabel: '本机 192.168.1.100 · 设备自检'
-  }
-})
-
-const displayStats = computed(() => {
-  const s = displaySummary.value
-  if (!s) return { total: 0, ok: 0, warn: 0, bad: 0 }
-  return {
-    total: s.total,
-    ok: s.passed,
-    warn: s.warning || 0,
-    bad: s.failed
-  }
-})
-
-const displayCategories = computed(() => {
-  const r = record.value
-  if (!r) return []
-  if (r.resultCategories?.length) return r.resultCategories
-  const items = r.detailItems || []
-  return groupDeviceResultsByCategory(items)
-})
-
-const progressStatusType = computed(() => {
-  const s = displaySummary.value
-  if (!s) return undefined
-  return s.failed > 0 ? 'exception' : 'success'
+const detailRows = computed(() => {
+  const items = record.value?.detailItems || []
+  return items.map((item) => ({
+    name: item.name,
+    status: item.status,
+    detail: item.detail || '—',
+    abnormalDesc: item.abnormalDesc || (item.status === '异常' ? item.detail || '检测未通过' : '')
+  }))
 })
 
 watchEffect(() => {
@@ -132,13 +126,20 @@ onMounted(() => {
     ElMessage.warning('缺少记录 ID')
   } else if (!record.value) {
     ElMessage.warning('检测记录不存在或已过期')
-  } else {
-    resultsRef.value?.resetExpanded()
   }
 })
 
 function goBack () {
   router.push({ path: '/system/inspect', query: { tab: 'device' } })
+}
+
+function exportReport () {
+  if (!record.value) {
+    ElMessage.warning('暂无可导出的检测记录')
+    return
+  }
+  downloadDeviceInspectReport(record.value)
+  ElMessage.success('检测报告已导出')
 }
 </script>
 
@@ -154,7 +155,15 @@ function goBack () {
 .device-inspect-detail__head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.device-inspect-detail__head-left {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .device-inspect-detail__back {
@@ -174,20 +183,55 @@ function goBack () {
   color: $text-primary;
 }
 
-.device-inspect-detail__meta {
-  padding: 16px 20px;
+.device-inspect-detail__section {
+  padding: 20px 24px;
 }
 
-.device-inspect-detail__results {
-  padding: 16px 20px 20px;
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
 
-  :deep(.results-module__toolbar) {
-    margin-bottom: 12px;
+.section-bar {
+  width: 3px;
+  height: 14px;
+  background: $primary-color;
+  border-radius: 2px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.basic-info-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px 48px;
+}
+
+.basic-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 160px;
+
+  &__label {
+    font-size: 13px;
+    color: $text-secondary;
   }
 
-  :deep(.results-module__progress) {
-    display: none;
+  &__value {
+    font-size: 14px;
+    color: $text-primary;
   }
+}
+
+.detail-table {
+  width: 100%;
 }
 
 .status-cell {
@@ -201,6 +245,10 @@ function goBack () {
   }
 
   &.is-fail {
+    color: #ff4d4f;
+  }
+
+  &.is-off {
     color: #ff4d4f;
   }
 }

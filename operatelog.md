@@ -1,22 +1,9 @@
 # 操作日志
 
-## 2026-05-28（密钥管理 · 0029 PQC 密钥类型细化）
+## 2026-05-28（设备自检详情 · 导出检测报告）
 
-- **`KeyManage0029Panel.vue`**：PQC 体系由 4 类算法改为 **16 种独立密钥类型**（ML_DSA_44/65/87、SLH_DSA_SHA2_*、AIGIS_SIG1～3、LMS_SM3_H5_*）；生成密钥时 **无密钥长度选择**；查询区密码算法筛选项同步；列表/详情 PQC 行长度显示「—」。
-
-## 2026-05-28（密钥管理 · 0019 导入容器走 UKEY）
-
-- **`KeyManageSecurityModals.vue`**：UKEY 弹窗支持 **备份 / 导入容器** 两种模式（控件检测 → 选择 UKEY → 确定）；导入提示「请选择用于导入容器的 UKEY」。
-- **`KeyManage0019Panel.vue`**：**导入容器** 改为调用 `openUkeyImport`，与行内 **备份** 共用同一 UKEY 流程。
-
-## 2026-05-28（密钥管理 · 0019 去除 PIN 与可导出选项）
-
-- **`KeyManage0019Panel.vue`**：生成容器表单移除 **PIN** 字段及校验；新增 **是否可导出**（是/否，对应 `uiExportFlag` 0/1）；列表与详情展示可导出状态；操作列移除 **查看认证凭据**。
-- **`KeyManageSecurityModals.vue`**：移除 0019 专用的 `openViewAuthCredentialsFlow`（PIN 认证凭据）流程。
-
-## 2026-05-28（设备自检详情 · 对齐业务检测展示样式）
-
-- **`DeviceInspectDetail.vue`**：检测内容区复用 `InspectResultsPanel`（统计卡片、检测对象条、分类折叠明细），与业务检测一致；顶部保留基本信息描述列表；隐藏详情页进度条。
+- **`DeviceInspectDetail.vue`**：标题栏增加 **导出检测报告** 按钮。
+- **`inspectCenter.js`**：新增 `buildDeviceInspectReportText`、`downloadDeviceInspectReport`，按当次记录生成并下载 `.txt` 报告（含基本信息与分类检测明细）。
 
 ## 2026-05-28（检测中心 · 修复无法进入）
 

@@ -326,3 +326,70 @@ export function getLastDeviceInspectFromHistory () {
   const list = loadInspectHistory().filter((h) => h.inspectType === 'device')
   return list[0] || null
 }
+
+/** 生成设备自检报告文本（原型） */
+export function buildDeviceInspectReportText (record) {
+  if (!record) return ''
+  const s = record.summary || {}
+  const total = s.total ?? record.itemCount ?? 0
+  const passed = s.passed ?? record.passedCount ?? 0
+  const failed = s.failed ?? record.failedCount ?? 0
+  const warn = s.warning ?? 0
+  const target = s.targetLabel || '本机 192.168.1.100 · 设备自检'
+  const lines = [
+    '设备自检报告',
+    '========================================',
+    `报告编号：${record.id || '—'}`,
+    `自检时间：${record.finishedAt || '—'}`,
+    `检测类型：${detectTypeLabel(record)}`,
+    `检测结果：${overallResultLabel(record)}`,
+    `检测对象：${target}`,
+    `检测项总数：${total}    正常：${passed}    警告：${warn}    异常：${failed}`,
+    '',
+    '检测明细',
+    '----------------------------------------'
+  ]
+
+  const categories = record.resultCategories?.length
+    ? record.resultCategories
+    : groupDeviceResultsByCategory(record.detailItems || [])
+
+  let index = 1
+  for (const cat of categories) {
+    lines.push('')
+    lines.push(`【${cat.name}】`)
+    for (const item of cat.items || []) {
+      lines.push(`${index}. ${item.name}`)
+      lines.push(`   状态：${item.label || '—'}`)
+      const meta = item.metaLines || []
+      if (meta.length) {
+        for (const line of meta) {
+          lines.push(`   ${line}`)
+        }
+      } else {
+        const raw = (record.detailItems || []).find((d) => d.name === item.name)
+        if (raw?.detail) lines.push(`   说明：${raw.detail}`)
+        if (raw?.abnormalDesc) lines.push(`   异常说明：${raw.abnormalDesc}`)
+      }
+      index++
+    }
+  }
+
+  lines.push('')
+  lines.push('----------------------------------------')
+  lines.push(`报告生成时间：${formatDateTime(new Date())}`)
+  return lines.join('\n')
+}
+
+/** 下载设备自检报告（.txt，原型） */
+export function downloadDeviceInspectReport (record) {
+  const content = buildDeviceInspectReportText(record)
+  const blob = new Blob(['\ufeff', content], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  const timePart = String(record.finishedAt || 'report').replace(/[:\s]/g, '-')
+  link.href = url
+  link.download = `设备自检报告_${timePart}.txt`
+  link.click()
+  URL.revokeObjectURL(url)
+}
