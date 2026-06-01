@@ -11,7 +11,7 @@
         </el-tab-pane>
         <el-tab-pane name="0019" lazy>
           <template #label>
-            <span class="key-tab-label">通用密码容器<el-tag type="danger" effect="dark" size="small" style="margin-left: 6px;">新</el-tag></span>
+            <span class="key-tab-label">通用密码容器<el-tag type="danger" effect="dark" size="small" class="key-tab-tag">V1.9.1</el-tag></span>
           </template>
           <KeyManage0019Panel />
         </el-tab-pane>
@@ -110,5 +110,9 @@ watchEffect(() => {
   display: inline-flex;
   align-items: center;
   line-height: 1.2;
+}
+
+.key-tab-tag {
+  margin-left: 6px;
 }
 </style>

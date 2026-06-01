@@ -58,7 +58,7 @@
         <el-menu-item index="/system/pool">连接池配置</el-menu-item>
         <el-menu-item index="/system/inspect">检测中心<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
         <el-menu-item index="/system/config">系统配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
-        <el-menu-item index="/system/ha">高可用配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
+        <el-menu-item index="/system/ha">高可用配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">V1.9.1</el-tag></el-menu-item>
       </el-sub-menu>
     </el-menu>
 

@@ -35,7 +35,6 @@
             <el-option label="全部" value="" />
             <el-option label="签名验签" value="签名验签" />
             <el-option label="加密解密" value="加密解密" />
-            <el-option label="SM9短签名" value="SM9短签名" />
           </el-select>
         </div>
         <div class="filter-item filter-item--range">
@@ -110,12 +109,14 @@
           <template #label>
             <span class="form-label-with-tag">
               密钥类型
-              <el-tag type="danger" effect="dark" size="small">新</el-tag>
+              <el-tag v-if="isIbcKeyType" type="danger" effect="dark" size="small">V1.9.1</el-tag>
+              <el-tag v-else type="danger" effect="dark" size="small">新</el-tag>
             </span>
           </template>
           <el-select
             v-model="keyForm.keyType"
             class="key-type-group-select"
+            popper-class="key-type-group-select-popper"
             style="width: 100%"
             @change="handleKeyTypeChange"
           >
@@ -126,6 +127,22 @@
             >
               <el-option
                 v-for="opt in group.options"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-option-group>
+            <el-option-group label="IBC体系密钥" class="key-type-ibc-group">
+              <el-option
+                v-for="opt in IBC_KEY_TYPE_OPTIONS"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-option-group>
+            <el-option-group label="PQC体系密钥">
+              <el-option
+                v-for="opt in PQC_KEY_OPTIONS"
                 :key="opt.value"
                 :label="opt.label"
                 :value="opt.value"
@@ -394,7 +411,7 @@ const PQC_KEY_TYPES = PQC_KEY_OPTIONS.map((o) => o.value)
 /** 对称密钥类型（块密码，仅加密解密） */
 const SYMMETRIC_KEY_TYPES = [KEY_TYPE.SM4, KEY_TYPE.TDES, KEY_TYPE.AES]
 
-/** 分组下拉：PKI / 对称密钥 / IBC */
+/** 分组下拉：PKI / 对称密钥（IBC、PQC 在模板中单独渲染） */
 const KEY_TYPE_GROUPS = [
   {
     label: 'PKI体系密钥',
@@ -410,25 +427,19 @@ const KEY_TYPE_GROUPS = [
       { label: '3DES', value: KEY_TYPE.TDES },
       { label: 'AES', value: KEY_TYPE.AES }
     ]
-  },
-  {
-    label: 'IBC体系密钥',
-    options: [
-      { label: 'SM9主密钥', value: KEY_TYPE.SM9_MASTER },
-      { label: 'SM9标识密钥', value: KEY_TYPE.SM9_IDENTITY },
-      { label: 'SM9分片主密钥', value: KEY_TYPE.SM9_SHARD }
-    ]
-  },
-  {
-    label: 'PQC体系密钥',
-    options: PQC_KEY_OPTIONS
   }
+]
+
+const IBC_KEY_TYPE_OPTIONS = [
+  { label: 'SM9主密钥', value: KEY_TYPE.SM9_MASTER },
+  { label: 'SM9标识密钥', value: KEY_TYPE.SM9_IDENTITY },
+  { label: 'SM9分片主密钥', value: KEY_TYPE.SM9_SHARD }
 ]
 
 const IBC_KEY_TYPES = [KEY_TYPE.SM9_MASTER, KEY_TYPE.SM9_IDENTITY, KEY_TYPE.SM9_SHARD]
 
 /** SM9 固定密钥用途 */
-const SM9_KEY_USAGE = 'SM9短签名'
+const SM9_KEY_USAGE = '签名验签'
 
 /** PQC 固定密钥用途 */
 const PQC_KEY_USAGE = '签名验签'
@@ -986,12 +997,7 @@ const handleViewPassword = (row) => {
 }
 
 .key-type-group-select {
-  :deep(.el-select-group__title) {
-    color: $primary-color;
-    font-weight: 600;
-    font-size: 13px;
-    padding-left: 12px;
-  }
+  width: 100%;
 }
 
 .detail-p2-body {
@@ -1024,5 +1030,40 @@ const handleViewPassword = (row) => {
   font-size: 14px;
   line-height: 22px;
   word-break: break-all;
+}
+</style>
+
+<style lang="scss">
+@import '@/styles/variables.scss';
+
+.key-type-group-select-popper {
+  .key-type-ibc-group .el-select-group__title,
+  .el-select-group__wrap:nth-child(3) .el-select-group__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    &::after {
+      content: 'V1.9.1';
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 6px;
+      height: 20px;
+      line-height: 20px;
+      font-size: 12px;
+      color: #fff;
+      background-color: var(--el-color-danger);
+      border-radius: var(--el-border-radius-base);
+      font-weight: normal;
+    }
+  }
+
+  .el-select-group__title {
+    color: $primary-color;
+    font-weight: 600;
+    font-size: 13px;
+    padding-left: 12px;
+  }
 }
 </style>
