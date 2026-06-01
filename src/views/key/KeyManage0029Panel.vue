@@ -64,7 +64,7 @@
     <el-table :data="pagedKeyList" border stripe>
       <el-table-column prop="index" label="密钥索引" width="100" align="center" />
       <el-table-column prop="keyId" label="密钥ID" min-width="160" show-overflow-tooltip />
-      <el-table-column prop="keyAlgorithm" label="密钥算法" width="100" />
+      <el-table-column prop="keyAlgorithm" label="密钥算法" width="150" />
       <el-table-column prop="keyUsage" label="密钥用途" min-width="140" show-overflow-tooltip />
       <el-table-column prop="keyLength" label="密钥长度" width="120" align="center" show-overflow-tooltip />
       <el-table-column prop="addedTime" label="添加时间" width="180" />
