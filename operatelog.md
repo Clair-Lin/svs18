@@ -936,6 +936,14 @@
 
 - **`src/views/key/KeyManage0029Panel.vue`**：查询区「密码算法」将 PQC 项归入 **PQC算法** 分组，分组标题展示 **新** 角标；生成密钥下拉 **PQC体系密钥** 分组同步 **新** 角标（与 IBC 的 V1.9.1 样式一致）；选择 PQC 类型时表单项「密钥类型」旁显示 **新**（非 PQC/IBC 不再误显示）。
 
+## 2026-06-04（密钥管理 · PQC 角标改为 V1.9.1）
+
+- **`src/views/key/KeyManage0029Panel.vue`**：PQC 相关分组标题角标及选中 PQC 时「密钥类型」旁标签由 **新** 改为 **V1.9.1**（与 IBC 一致）。
+
+## 2026-06-04（密钥管理 · 通用密码容器 Tab 角标）
+
+- **`src/views/key/KeyManage.vue`**：「通用密码容器」页签角标由 **V1.9.1** 改为 **新**。
+
 ## 2026-06-04（网络配置 · 网桥 Tab）
 
 - **`src/views/system/NetworkConfig.vue`**：VLAN 后新增 **网桥** Tab，路由 `?tab=bridge`。

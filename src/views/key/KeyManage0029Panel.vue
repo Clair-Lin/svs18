@@ -115,8 +115,7 @@
           <template #label>
             <span class="form-label-with-tag">
               密钥类型
-              <el-tag v-if="isIbcKeyType" type="danger" effect="dark" size="small">V1.9.1</el-tag>
-              <el-tag v-else-if="isPqcKeyType" type="danger" effect="dark" size="small">新</el-tag>
+              <el-tag v-if="isIbcKeyType || isPqcKeyType" type="danger" effect="dark" size="small">V1.9.1</el-tag>
             </span>
           </template>
           <el-select
@@ -1071,7 +1070,7 @@ const handleViewPassword = (row) => {
 
   .key-type-pqc-group .el-select-group__title,
   .filter-pqc-group .el-select-group__title {
-    @include select-group-title-badge('新');
+    @include select-group-title-badge('V1.9.1');
   }
 
   .el-select-group__title {
