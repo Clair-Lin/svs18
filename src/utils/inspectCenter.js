@@ -4,16 +4,19 @@ const SCHEDULE_KEY = 'svs_inspect_schedule'
 const HISTORY_KEY = 'svs_inspect_history'
 const MAX_HISTORY = 100
 
-/** @typedef {'rng'|'sm1'|'sm2'|'sm3'|'sm4'|'key-integrity'|'hsm-card'|'network'|'disk'|'memory'|'cpu'} DeviceInspectItemId */
+/** @typedef {'sm1'|'sm2'|'sm3'|'sm4'|'rsa'|'des3'|'aes'|'sha'|'hsm-card'|'ntp'|'network'|'disk'|'memory'|'cpu'} DeviceInspectItemId */
 
 export const DEVICE_INSPECT_ITEMS = [
-  { id: 'rng', name: '随机数质量自检', category: 'crypto-base' },
   { id: 'sm1', name: 'SM1算法自检', category: 'sm-algo' },
   { id: 'sm2', name: 'SM2算法自检', category: 'sm-algo' },
   { id: 'sm3', name: 'SM3算法自检', category: 'sm-algo' },
   { id: 'sm4', name: 'SM4算法自检', category: 'sm-algo' },
-  { id: 'key-integrity', name: '存储密钥和数据完整性自检', category: 'data-key' },
+  { id: 'rsa', name: 'RSA算法自检', category: 'intl-algo' },
+  { id: 'des3', name: '3DES算法自检', category: 'intl-algo' },
+  { id: 'aes', name: 'AES算法自检', category: 'intl-algo' },
+  { id: 'sha', name: 'SHA算法自检', category: 'intl-algo' },
   { id: 'hsm-card', name: '内置密码卡状态自检', category: 'hardware' },
+  { id: 'ntp', name: 'NTP', category: 'system-resource' },
   { id: 'network', name: '网络', category: 'system-resource' },
   { id: 'disk', name: '硬盘', category: 'system-resource' },
   { id: 'memory', name: '内存', category: 'system-resource' },
@@ -21,14 +24,88 @@ export const DEVICE_INSPECT_ITEMS = [
 ]
 
 export const DEVICE_CATEGORY_LABELS = {
-  'crypto-base': '密码学基础',
   'sm-algo': '国密算法',
-  'data-key': '数据与密钥',
+  'intl-algo': '国际算法',
   hardware: '硬件',
   'system-resource': '系统资源'
 }
 
 export const ALL_DEVICE_ITEM_IDS = DEVICE_INSPECT_ITEMS.map((i) => i.id)
+
+/** 设备自检数据结构版本（变更检测项时需递增并触发迁移） */
+const DEVICE_INSPECT_SCHEMA_VERSION = 6
+const DEVICE_INSPECT_SCHEMA_KEY = 'svs_device_inspect_schema_v'
+
+const DEVICE_INSPECT_ITEM_PROTOTYPES = {
+  sm1: { detailOk: 'SM1 算法自检通过', detailFail: 'SM1 算法自检未通过' },
+  sm2: { detailOk: 'SM2 算法自检通过', detailFail: 'SM2 算法自检未通过' },
+  sm3: { detailOk: 'SM3 算法自检通过', detailFail: 'SM3 算法自检未通过' },
+  sm4: { detailOk: 'SM4 算法自检通过', detailFail: 'SM4 算法自检未通过' },
+  rsa: { detailOk: 'RSA 算法自检通过', detailFail: 'RSA 算法自检未通过', failRate: 0.12 },
+  des3: { detailOk: '3DES 算法自检通过', detailFail: '3DES 算法自检未通过' },
+  aes: { detailOk: 'AES 算法自检通过', detailFail: 'AES 算法自检未通过' },
+  sha: { detailOk: 'SHA 算法自检通过', detailFail: 'SHA 算法自检未通过' },
+  'hsm-card': {
+    detailOk: '内置密码卡状态正常',
+    detailFail: '内置密码卡状态异常'
+  },
+  ntp: { failRate: 0.1 },
+  network: {
+    detailOk: '网络: ens192 (running)',
+    detailFail: '网络: ens192 (down); 请检查网卡或链路',
+    failRate: 0.08
+  },
+  disk: {
+    detailOk: '硬盘: 已用 10 GB / 总共 23 GB',
+    detailFail: '硬盘: 使用率过高或读写异常',
+    failRate: 0.05
+  },
+  memory: {
+    detailOk: '内存: 已用 2777 MB / 总共 3728 MB',
+    detailFail: '内存: 已用 3100 MB / 总共 3728 MB'
+  },
+  cpu: {
+    detailOk: 'CPU: Intel(R) Xeon(R) CPU E5-2650 v4 @ 2.20GHz (4核心)',
+    detailFail: 'CPU: 负载过高或硬件状态异常'
+  }
+}
+
+function stableHash (seed) {
+  let h = 0
+  for (let i = 0; i < seed.length; i++) {
+    h = ((h << 5) - h) + seed.charCodeAt(i)
+    h |= 0
+  }
+  return Math.abs(h)
+}
+
+/** 按记录 ID 稳定判定单项是否通过（用于迁移新增项） */
+function stableItemOk (recordId, itemId, failRate = 0) {
+  if (!failRate) return true
+  const bucket = stableHash(`${recordId}:${itemId}`) % 100
+  return bucket / 100 > failRate
+}
+
+function stableDurationMs (recordId, itemId) {
+  return 80 + (stableHash(`${recordId}:${itemId}:dur`) % 120)
+}
+
+/** 原型：NTP 时间偏差（秒）；正常 ≤5，异常 >5 */
+function resolveNtpDeviationSec (recordId, ok) {
+  if (recordId) {
+    const h = stableHash(`${recordId}:ntp:offset`)
+    return ok ? 1 + (h % 5) : 6 + (h % 25)
+  }
+  return ok
+    ? 1 + Math.floor(Math.random() * 5)
+    : 6 + Math.floor(Math.random() * 25)
+}
+
+function formatNtpDetail (ok, deviationSec) {
+  const offsetText = `设备时间与NTP服务器时间偏差 ${deviationSec} 秒`
+  if (ok) return `NTP: 服务运行中，${offsetText}`
+  return `NTP: 时间同步异常，${offsetText}`
+}
 
 const DEFAULT_SCHEDULE = {
   enabled: false,
@@ -92,6 +169,7 @@ export function appendInspectHistory (record) {
 }
 
 export function getInspectHistoryById (id) {
+  migrateDeviceInspectHistoryIfNeeded()
   return loadInspectHistory().find((h) => h.id === id)
 }
 
@@ -101,65 +179,29 @@ export function resolveDeviceScopeItems (scopeMode, scopeItems) {
   return ALL_DEVICE_ITEM_IDS.filter((id) => set.has(id))
 }
 
-/** 原型：单项检测结果 */
-function buildDeviceInspectItemResult (id) {
+function buildDeviceInspectItemResultFromStatus (id, ok, durationMs, recordId = '') {
   const def = DEVICE_INSPECT_ITEMS.find((i) => i.id === id)
   const name = def?.name || id
   const category = def?.category || 'system-resource'
-  const durationMs = 80 + Math.floor(Math.random() * 120)
-
-  const prototypes = {
-    rng: {
-      ok: true,
-      detailOk: '随机数发生器自检通过',
-      detailFail: '随机数质量检测未通过'
-    },
-    sm1: {
-      ok: Math.random() > 0.15,
-      detailOk: 'SM1 算法自检通过',
-      detailFail: 'SM1 算法自检未通过'
-    },
-    sm2: { ok: true, detailOk: 'SM2 算法自检通过', detailFail: 'SM2 算法自检未通过' },
-    sm3: { ok: true, detailOk: 'SM3 算法自检通过', detailFail: 'SM3 算法自检未通过' },
-    sm4: { ok: true, detailOk: 'SM4 算法自检通过', detailFail: 'SM4 算法自检未通过' },
-    'key-integrity': {
-      ok: true,
-      detailOk: '存储密钥与数据完整性校验通过',
-      detailFail: '密钥或数据完整性校验失败'
-    },
-    'hsm-card': {
-      ok: true,
-      detailOk: '内置密码卡状态正常',
-      detailFail: '内置密码卡状态异常'
-    },
-    network: {
-      ok: Math.random() > 0.08,
-      detailOk: '网络: ens192 (running)',
-      detailFail: '网络: ens192 (down); 请检查网卡或链路'
-    },
-    disk: {
-      ok: Math.random() > 0.05,
-      detailOk: '硬盘: 已用 10 GB / 总共 23 GB',
-      detailFail: '硬盘: 使用率过高或读写异常'
-    },
-    memory: {
-      ok: true,
-      detailOk: '内存: 已用 2777 MB, 总共 3728 MB, 交换空间: 8075 MB, 已使用空间: 834 MB',
-      detailFail: '内存: 可用空间不足或交换分区异常'
-    },
-    cpu: {
-      ok: true,
-      detailOk: 'CPU: Intel(R) Xeon(R) CPU E5-2650 v4 @ 2.20GHz (4核心)',
-      detailFail: 'CPU: 负载过高或硬件状态异常'
-    }
-  }
-
-  const proto = prototypes[id] || {
-    ok: true,
+  const proto = DEVICE_INSPECT_ITEM_PROTOTYPES[id] || {
     detailOk: '自检通过',
     detailFail: '自检未通过'
   }
-  const ok = proto.ok
+
+  if (id === 'ntp') {
+    const deviationSec = resolveNtpDeviationSec(recordId, ok)
+    const detail = formatNtpDetail(ok, deviationSec)
+    return {
+      id,
+      name,
+      category,
+      status: ok ? '正常' : '异常',
+      tagType: ok ? 'success' : 'danger',
+      detail,
+      abnormalDesc: ok ? '' : detail,
+      durationMs
+    }
+  }
 
   return {
     id,
@@ -171,6 +213,83 @@ function buildDeviceInspectItemResult (id) {
     abnormalDesc: ok ? '' : proto.detailFail,
     durationMs
   }
+}
+
+/** 原型：单项检测结果 */
+function buildDeviceInspectItemResult (id) {
+  const proto = DEVICE_INSPECT_ITEM_PROTOTYPES[id] || {}
+  const failRate = proto.failRate ?? 0
+  const ok = failRate ? Math.random() > failRate : true
+  const durationMs = 80 + Math.floor(Math.random() * 120)
+  return buildDeviceInspectItemResultFromStatus(id, ok, durationMs)
+}
+
+function applyDeviceInspectSummary (record, detailItems) {
+  const passed = detailItems.filter((i) => i.status === '正常').length
+  const failed = detailItems.length - passed
+  const targetLabel =
+    record.summary?.targetLabel || record.targetLabel || '本机 192.168.1.100 · 设备自检'
+  return {
+    ...record,
+    scopeMode: record.scopeMode === 'custom' ? record.scopeMode : 'all',
+    scopeItems: [...ALL_DEVICE_ITEM_IDS],
+    detailItems,
+    resultCategories: groupDeviceResultsByCategory(detailItems),
+    itemCount: detailItems.length,
+    passedCount: passed,
+    failedCount: failed,
+    overallStatus: failed > 0 ? '异常' : '正常',
+    summary: {
+      ...(record.summary || {}),
+      total: detailItems.length,
+      passed,
+      warning: 0,
+      failed,
+      time: record.finishedAt || record.summary?.time,
+      targetLabel
+    }
+  }
+}
+
+function migrateDeviceInspectRecord (record) {
+  const oldById = new Map()
+  for (const item of record.detailItems || []) {
+    if (item.id) oldById.set(item.id, item)
+    else if (item.name) {
+      const def = DEVICE_INSPECT_ITEMS.find((d) => d.name === item.name)
+      if (def) oldById.set(def.id, { ...item, id: def.id })
+    }
+  }
+
+  const detailItems = ALL_DEVICE_ITEM_IDS.map((id) => {
+    const old = oldById.get(id)
+    const proto = DEVICE_INSPECT_ITEM_PROTOTYPES[id] || {}
+    const ok = old
+      ? old.status === '正常'
+      : stableItemOk(record.id, id, proto.failRate ?? 0)
+    const durationMs = old?.durationMs ?? stableDurationMs(record.id, id)
+    return buildDeviceInspectItemResultFromStatus(id, ok, durationMs, record.id)
+  })
+
+  return applyDeviceInspectSummary(record, detailItems)
+}
+
+/** 将 localStorage 中已有设备自检记录迁移到当前检测项与详情文案 */
+export function migrateDeviceInspectHistoryIfNeeded () {
+  const current = readJson(DEVICE_INSPECT_SCHEMA_KEY, 0)
+  if (current >= DEVICE_INSPECT_SCHEMA_VERSION) return false
+
+  const list = loadInspectHistory()
+  let changed = false
+  const next = list.map((record) => {
+    if (record.inspectType !== 'device') return record
+    changed = true
+    return migrateDeviceInspectRecord(record)
+  })
+
+  if (changed) writeJson(HISTORY_KEY, next)
+  writeJson(DEVICE_INSPECT_SCHEMA_KEY, DEVICE_INSPECT_SCHEMA_VERSION)
+  return changed
 }
 
 /** 原型：根据项 ID 生成演示结果 */
@@ -190,7 +309,7 @@ export function buildDeviceInspectResults (itemIds) {
 }
 
 export function groupDeviceResultsByCategory (items) {
-  const order = ['crypto-base', 'sm-algo', 'data-key', 'hardware', 'system-resource']
+  const order = ['sm-algo', 'intl-algo', 'hardware', 'system-resource']
   const groups = {}
   for (const item of items) {
     const cat = item.category || 'summary'
@@ -273,6 +392,7 @@ export function filterDeviceHistory (rows, filters = {}) {
 
 /** 原型：无设备自检记录时写入演示数据 */
 export function seedDeviceInspectHistoryIfEmpty () {
+  migrateDeviceInspectHistoryIfNeeded()
   const list = loadInspectHistory()
   if (list.some((h) => h.inspectType === 'device')) return
   const now = Date.now()

@@ -18,6 +18,10 @@
           <template #label>VLAN</template>
           <NetworkVlanPanel />
         </el-tab-pane>
+        <el-tab-pane name="bridge" lazy>
+          <template #label>网桥</template>
+          <NetworkBridgePanel />
+        </el-tab-pane>
       </el-tabs>
     </div>
   </div>
@@ -31,14 +35,16 @@ import NetworkPortPanel from './network/NetworkPortPanel.vue'
 import NetworkSubInterfacePanel from './network/NetworkSubInterfacePanel.vue'
 import NetworkBondPanel from './network/NetworkBondPanel.vue'
 import NetworkVlanPanel from './network/NetworkVlanPanel.vue'
+import NetworkBridgePanel from './network/NetworkBridgePanel.vue'
 
-const TAB_NAMES = ['port', 'sub', 'bond', 'vlan']
+const TAB_NAMES = ['port', 'sub', 'bond', 'vlan', 'bridge']
 
 const tabCopy = {
   port: '网口配置',
   sub: '子网口',
   bond: '聚合接口',
-  vlan: 'VLAN'
+  vlan: 'VLAN',
+  bridge: '网桥'
 }
 
 const route = useRoute()
@@ -109,4 +115,8 @@ watchEffect(() => {
     padding-top: 16px;
   }
 }
+</style>
+
+<style lang="scss">
+@import './network/networkDialog.scss';
 </style>

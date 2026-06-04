@@ -1,5 +1,30 @@
 # 操作日志
 
+## 2026-06-03（设备自检 · 自检项目与判定文案）
+
+- **`src/utils/inspectCenter.js`**：按规范调整设备自检项目共 **13 项**——国密 **SM2/SM3/SM4**；国际 **RSA/3DES/AES**；**存储密钥和数据完整性自检**、**内置密码卡状态自检**；系统资源 **NTP、网络、硬盘、内存、CPU**。移除随机数质量自检、SM1 算法自检。
+- 分类分组：国密算法、国际算法、数据与密钥、硬件、系统资源。
+
+## 2026-06-03（设备自检 · 检测详情文案简化）
+
+- **`src/utils/inspectCenter.js`**：检测详情/异常说明恢复为简短原型描述（如「SM2 算法自检通过」「网络: ens192 (running)」），不再展开规范中的检查要求与判定标准全文。
+
+## 2026-06-03（设备自检 · 历史记录迁移）
+
+- **`src/utils/inspectCenter.js`**：新增 `migrateDeviceInspectHistoryIfNeeded`（schema v2）；进入设备自检页时自动将 localStorage 中已有记录更新为 **13 项**检测项与当前简短详情，保留同名项原正常/异常状态，移除随机数/SM1，补齐 RSA/3DES/AES/NTP；并重算通过数、失败数与分类汇总。
+
+## 2026-06-03（设备自检 · NTP 详情显示时间偏差）
+
+- **`src/utils/inspectCenter.js`**：NTP 检测详情展示 **设备时间与NTP服务器时间偏差**（正常 1–5 秒，异常 6–30 秒）；schema 升至 **v3**，历史记录进入页面时自动刷新 NTP 详情文案。
+
+## 2026-06-03（设备自检 · 移除密钥完整性项与精简内存详情）
+
+- **`src/utils/inspectCenter.js`**：移除 **存储密钥和数据完整性自检**；设备自检共 **12 项**；内存详情仅显示 **已用 / 总共**（如 `内存: 已用 2777 MB / 总共 3728 MB`）；schema **v4** 自动迁移历史记录。
+
+## 2026-06-03（设备自检 · 增加 SHA 算法自检）
+
+- **`src/utils/inspectCenter.js`**：国际算法分类新增 **SHA算法自检**；设备自检共 **13 项**；schema **v5** 自动为历史记录补齐该项。
+
 ## 2026-05-29（文档 · GitHub 推送说明 · 补充更新约定）
 
 - **`docs/GitHub推送说明.md`**：新增 **§2.4 推送后同步更新本文档**；摘要与相关文档索引同步；顶栏版本号改为 **1.9.0**（`Header.vue`）；0029 列表「密钥算法」列宽 150px。
@@ -896,3 +921,30 @@
 - **密钥类型**仅 **SM2**、**RSA**；**密钥长度**为下拉，SM2 仅 **256**、RSA 仅 **2048**（`KEY_LENGTHS_BY_TYPE_0019`），切换类型时 `syncKeyLengthForType` 自动校正当前长度。
 - 移除 **容器名长度**表单项及 `uiContainerLen` 计算属性。
 - `gmt0019.js`：以 `KEY_LENGTHS_BY_TYPE_0019` 取代原 `KEY_TYPE_TO_BITS_0019` 与多档 RSA 类型枚举。
+
+## 2026-06-04（网络配置 · 接口管理弹窗与网口列表）
+
+- **`src/utils/networkInterface.js`**（新）：物理网口演示数据（ETH0–ETH4）、用途/主接口/bond 模式等枚举与 `formatIpCell` 工具。
+- **`src/views/system/network/NetworkPortPanel.vue`**：网口列表对齐设计图——接口别名、接口名、IP/掩码/网关（IPv4/IPv6 双行）、用途、网口状态图标、禁/启用开关；操作 **编辑**（「接口编辑」弹窗：用途单选 + IPV4/IPV6 页签）、**网口详情**（只读详情弹窗）。
+- **`src/views/system/network/NetworkSubInterfacePanel.vue`**：**添加** 打开「添加子接口」弹窗（归属主接口、禁/启用、IP 类型、IP、掩码）；添加后写入列表。
+- **`src/views/system/network/NetworkBondPanel.vue`**：**添加** 打开「添加聚合接口」弹窗（bond. 前缀名称、bond 模式、绑定网口多选 + 提示、IPV4/IPV6 页签）。
+- **`src/views/system/network/NetworkVlanPanel.vue`**：**添加** 打开「添加VLAN」弹窗（VLAN. 前缀 ID、关联接口、禁/启用、IPV4/IPV6 页签）。
+- **`src/views/system/network/networkPanel.scss`**：补充双行单元格、网口状态图标、IP 页签、详情列表、带前缀输入框等共用样式。
+- **`src/views/system/network/networkDialog.scss`**（新）、**`NetworkConfig.vue`**：各 Tab 弹窗统一对话框头/脚样式。
+
+## 2026-06-04（密钥管理 · PQC 算法「新」角标）
+
+- **`src/views/key/KeyManage0029Panel.vue`**：查询区「密码算法」将 PQC 项归入 **PQC算法** 分组，分组标题展示 **新** 角标；生成密钥下拉 **PQC体系密钥** 分组同步 **新** 角标（与 IBC 的 V1.9.1 样式一致）；选择 PQC 类型时表单项「密钥类型」旁显示 **新**（非 PQC/IBC 不再误显示）。
+
+## 2026-06-04（网络配置 · 网桥 Tab）
+
+- **`src/views/system/NetworkConfig.vue`**：VLAN 后新增 **网桥** Tab，路由 `?tab=bridge`。
+- **`src/views/system/network/NetworkBridgePanel.vue`**（新）：**添加网桥** 按钮；列表列——网桥名称、绑定网口、操作（编辑/删除）；默认 **br0** 仅可编辑不可删除。
+- **`src/utils/networkInterface.js`**：默认网桥 `br0` 及名称校验（br + 0–10）、`isSystemBridgeName` 等工具函数。
+- 添加/编辑弹窗：网桥名称（`br` 前缀 + 0–10 数字）、绑定网口下拉、网关（必填）、子网掩码（选填）。
+- **`NetworkBridgePanel.vue`**：网桥添加/编辑弹窗样式优化（白底标题栏、表单项间距与右对齐标签、统一 32px 控件高度、底栏按钮右对齐），表单文案与字段未改。
+- **`networkDialog.scss`**：接口管理全部弹窗收紧头/体/脚内边距（约 16–20px 横向）；表单项间距 16px；网口详情弹窗与网桥弹窗同步收紧。
+
+## 2026-06-04（检测中心 · 设备自检增加 SM1）
+
+- **`src/utils/inspectCenter.js`**：国密算法类新增 **SM1算法自检**；设备自检共 **14 项**；schema **v6** 自动为历史记录补齐该项并保留其余项状态。

@@ -13,17 +13,24 @@
         </div>
         <div class="filter-item">
           <span class="filter-label">密码算法</span>
-          <el-select v-model="filterAlgorithm" placeholder="全部" class="filter-select">
+          <el-select
+            v-model="filterAlgorithm"
+            placeholder="全部"
+            class="filter-select"
+            popper-class="key-algorithm-filter-popper"
+          >
             <el-option label="全部" value="" />
             <el-option label="SM2" value="SM2" />
             <el-option label="RSA" value="RSA" />
             <el-option label="SM9" value="SM9" />
-            <el-option
-              v-for="opt in PQC_KEY_OPTIONS"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
+            <el-option-group label="PQC算法" class="filter-pqc-group">
+              <el-option
+                v-for="opt in PQC_KEY_OPTIONS"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-option-group>
             <el-option label="SM4" value="SM4" />
             <el-option label="3DES" value="3DES" />
             <el-option label="AES" value="AES" />
@@ -109,7 +116,7 @@
             <span class="form-label-with-tag">
               密钥类型
               <el-tag v-if="isIbcKeyType" type="danger" effect="dark" size="small">V1.9.1</el-tag>
-              <el-tag v-else type="danger" effect="dark" size="small">新</el-tag>
+              <el-tag v-else-if="isPqcKeyType" type="danger" effect="dark" size="small">新</el-tag>
             </span>
           </template>
           <el-select
@@ -139,7 +146,7 @@
                 :value="opt.value"
               />
             </el-option-group>
-            <el-option-group label="PQC体系密钥">
+            <el-option-group label="PQC体系密钥" class="key-type-pqc-group">
               <el-option
                 v-for="opt in PQC_KEY_OPTIONS"
                 :key="opt.value"
@@ -1035,27 +1042,36 @@ const handleViewPassword = (row) => {
 <style lang="scss">
 @import '@/styles/variables.scss';
 
-.key-type-group-select-popper {
-  .key-type-ibc-group .el-select-group__title,
-  .el-select-group__wrap:nth-child(3) .el-select-group__title {
+@mixin select-group-title-badge($text) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  &::after {
+    content: $text;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    padding: 0 6px;
+    height: 20px;
+    line-height: 20px;
+    font-size: 12px;
+    color: #fff;
+    background-color: var(--el-color-danger);
+    border-radius: var(--el-border-radius-base);
+    font-weight: normal;
+  }
+}
 
-    &::after {
-      content: 'V1.9.1';
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 6px;
-      height: 20px;
-      line-height: 20px;
-      font-size: 12px;
-      color: #fff;
-      background-color: var(--el-color-danger);
-      border-radius: var(--el-border-radius-base);
-      font-weight: normal;
-    }
+.key-type-group-select-popper,
+.key-algorithm-filter-popper {
+  .key-type-ibc-group .el-select-group__title {
+    @include select-group-title-badge('V1.9.1');
+  }
+
+  .key-type-pqc-group .el-select-group__title,
+  .filter-pqc-group .el-select-group__title {
+    @include select-group-title-badge('新');
   }
 
   .el-select-group__title {
