@@ -13,6 +13,7 @@
             inline-prompt
             active-text="启用"
             inactive-text="关闭"
+            :before-change="beforeEnabledChange"
           />
           <el-tooltip
             placement="top"
@@ -39,7 +40,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   loadSystemCertValidation,
   persistSystemCertValidation
@@ -58,6 +59,21 @@ function loadForm () {
 }
 
 onMounted(loadForm)
+
+function beforeEnabledChange (nextEnabled) {
+  if (nextEnabled) return true
+  return ElMessageBox.confirm(
+    '关闭后，用户验签时将不再执行证书合法性校验，包括 CA 有效期、CA 证书链、吊销列表等校验，存在接受无效或已吊销证书的风险。是否确认关闭？',
+    '风险提示',
+    {
+      type: 'warning',
+      confirmButtonText: '确认关闭',
+      cancelButtonText: '取消'
+    }
+  )
+    .then(() => true)
+    .catch(() => false)
+}
 
 function onSave () {
   saving.value = true

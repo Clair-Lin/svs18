@@ -28,6 +28,11 @@ export const EXPORT_FLAG_OPTIONS = [
   { value: 1, label: '是' }
 ]
 
+/** 容器密钥是否允许导出/备份（uiExportFlag 为 1 时可导出） */
+export function isContainerKeyExportable (exportFlag) {
+  return exportFlag === 1
+}
+
 /** 各密钥类型允许的密钥长度（比特），对应 uiKeyBits 示意 */
 export const KEY_LENGTHS_BY_TYPE_0019 = {
   SM2: [256],

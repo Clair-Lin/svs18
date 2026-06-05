@@ -72,6 +72,7 @@
 import { ref, computed, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
+import { isContainerKeyExportable } from '@/constants/gmt0019.js'
 
 const ukeyDialogVisible = ref(false)
 const ukeyPhase = ref('detecting')
@@ -129,6 +130,10 @@ function openUkeyFlow (mode, row = null) {
 }
 
 function openUkeyBackup (row) {
+  if (row && 'exportFlag' in row && !isContainerKeyExportable(row.exportFlag)) {
+    ElMessage.warning('该容器密钥不可导出，无法进行备份')
+    return
+  }
   openUkeyFlow('backup', row)
 }
 

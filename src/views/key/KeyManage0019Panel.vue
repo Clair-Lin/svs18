@@ -15,7 +15,23 @@
       <el-table-column label="操作" fixed="right" width="140">
         <template #default="{ row }">
           <el-button type="primary" size="small" link @click="handleDetail(row)">详情</el-button>
-          <el-button type="primary" size="small" link @click="handleBackup(row)">备份</el-button>
+          <el-tooltip
+            :disabled="isContainerKeyExportable(row.exportFlag)"
+            content="该容器密钥不可导出，无法进行备份"
+            placement="top"
+          >
+            <span class="backup-action">
+              <el-button
+                type="primary"
+                size="small"
+                link
+                :disabled="!isContainerKeyExportable(row.exportFlag)"
+                @click="handleBackup(row)"
+              >
+                备份
+              </el-button>
+            </span>
+          </el-tooltip>
         </template>
       </el-table-column>
     </el-table>
@@ -116,7 +132,7 @@
 <script setup>
 import { ref, reactive, computed, inject } from 'vue'
 import { ElMessage } from 'element-plus'
-import { EXPORT_FLAG_OPTIONS } from '@/constants/gmt0019.js'
+import { EXPORT_FLAG_OPTIONS, isContainerKeyExportable } from '@/constants/gmt0019.js'
 import { KEY_MANAGE_SECURITY_KEY } from './keyManageSecurityKey.js'
 
 function exportFlagToLabel (flag) {
@@ -240,6 +256,10 @@ const handleDetail = (row) => {
 }
 
 const handleBackup = (row) => {
+  if (!isContainerKeyExportable(row.exportFlag)) {
+    ElMessage.warning('该容器密钥不可导出，无法进行备份')
+    return
+  }
   securityModalsRef.value?.openUkeyBackup?.(row)
 }
 </script>
@@ -289,6 +309,11 @@ const handleBackup = (row) => {
   font-size: 14px;
   line-height: 22px;
   word-break: break-all;
+}
+
+.backup-action {
+  display: inline-block;
+  margin-left: 8px;
 }
 
 </style>

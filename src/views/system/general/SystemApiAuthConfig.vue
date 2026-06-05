@@ -21,6 +21,7 @@
               inline-prompt
               active-text="启用"
               inactive-text="关闭"
+              :before-change="beforeGlobalEnabledChange"
             />
             <el-tooltip placement="top" effect="dark" :show-after="200" popper-class="config-help-tooltip">
               <template #content>
@@ -75,7 +76,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { loadSystemApiAuth, persistSystemApiAuth } from '@/utils/systemApiAuth'
 
 const formRef = ref(null)
@@ -108,6 +109,21 @@ function loadForm () {
 }
 
 onMounted(loadForm)
+
+function beforeGlobalEnabledChange (nextEnabled) {
+  if (nextEnabled) return true
+  return ElMessageBox.confirm(
+    '关闭后，全系统开放接口将不再执行 HMAC-SM3 鉴权，任意调用方均可访问开放接口，存在未授权访问风险。是否确认关闭？',
+    '风险提示',
+    {
+      type: 'warning',
+      confirmButtonText: '确认关闭',
+      cancelButtonText: '取消'
+    }
+  )
+    .then(() => true)
+    .catch(() => false)
+}
 
 function onSave () {
   formRef.value?.validate((valid) => {
