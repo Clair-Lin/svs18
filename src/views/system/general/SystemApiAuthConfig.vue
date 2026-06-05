@@ -1,11 +1,6 @@
 <template>
   <div class="system-api-auth">
-      <el-alert type="info" :closable="false" show-icon class="scope-alert">
-        <template #title>系统配置</template>
-        本页为<strong>系统级</strong>接口鉴权通用策略，全系统统一生效。
-      </el-alert>
-
-      <el-form
+    <el-form
         ref="formRef"
         :model="form"
         :rules="rules"
@@ -140,19 +135,6 @@ function onSave () {
 @import '@/styles/variables.scss';
 
 .system-api-auth {
-  .scope-alert {
-    margin-bottom: 20px;
-
-    .link-application {
-      color: $primary-color;
-      text-decoration: none;
-
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-  }
-
   .config-form {
     max-width: 720px;
 

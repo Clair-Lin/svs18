@@ -2,8 +2,8 @@
 
 ## 2026-06-05（GitHub · 推送 SVS_1.9.0 · 续推）
 
-- 推送本地提交 `4c67c30`（GitHub 推送说明）及后续增量至 `origin/SVS_1.9.0`。
-- **`src/views/system/general/SystemApiAuthConfig.vue`**：顶部说明文案精简，移除应用管理凭证跳转段落。
+- 推送本地提交 `4c67c30`、`bac0b77` 及后续增量至 `origin/SVS_1.9.0`。
+- **`src/views/system/general/SystemApiAuthConfig.vue`**：移除顶部 **系统配置** 说明区块及关联样式。
 
 ## 2026-06-05（GitHub · 推送 SVS_1.9.0）
 
