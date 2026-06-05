@@ -1,5 +1,10 @@
 # 操作日志
 
+## 2026-06-05（GitHub · 推送 SVS_1.9.0 · 续推）
+
+- 推送本地提交 `4c67c30`（GitHub 推送说明）及后续增量至 `origin/SVS_1.9.0`。
+- **`src/views/system/general/SystemApiAuthConfig.vue`**：顶部说明文案精简，移除应用管理凭证跳转段落。
+
 ## 2026-06-05（GitHub · 推送 SVS_1.9.0）
 
 - 提交 `315d8b5` 并推送至 `origin/SVS_1.9.0`：系统配置关闭风险提示、0019 不可导出禁止备份、界面功能说明文档更新。

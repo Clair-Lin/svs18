@@ -2,9 +2,7 @@
   <div class="system-api-auth">
       <el-alert type="info" :closable="false" show-icon class="scope-alert">
         <template #title>系统配置</template>
-        本页为<strong>系统级</strong>接口鉴权通用策略，全系统统一生效。各应用接入凭证（应用 ID、应用凭证）请在
-        <router-link to="/application" class="link-application">应用管理</router-link>
-        中通过「凭证」查看；应用管理不再提供按应用维度的接口鉴权配置。
+        本页为<strong>系统级</strong>接口鉴权通用策略，全系统统一生效。
       </el-alert>
 
       <el-form
