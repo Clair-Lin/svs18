@@ -2,7 +2,7 @@
 
 ## 2026-06-05（GitHub · 推送 SVS_1.9.0 · 续推）
 
-- 推送本地提交 `4c67c30`、`bac0b77` 及后续增量至 `origin/SVS_1.9.0`。
+- 已推送 `4c67c30`、`bac0b77`、`e851ab7`、`4067d9a` 至 `origin/SVS_1.9.0`（`315d8b5..4067d9a`）。
 - **`src/views/system/general/SystemApiAuthConfig.vue`**：移除顶部 **系统配置** 说明区块及关联样式。
 
 ## 2026-06-05（GitHub · 推送 SVS_1.9.0）
