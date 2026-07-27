@@ -13,30 +13,49 @@
       </div>
     </div>
 
-    <el-row :gutter="20">
-      <el-col :span="8">
-        <StatusOverview :data="status" />
-      </el-col>
+    <el-card class="card">
+      <el-tabs v-model="activeTab" type="card">
+        <el-tab-pane label="状态总览" name="overview">
+          <el-row :gutter="20">
+            <el-col :span="8">
+              <StatusOverview :data="status" />
+            </el-col>
+            <el-col :span="16">
+              <el-card>
+                <h4>详细状态</h4>
+                <el-descriptions column="2" border>
+                  <el-descriptions-item label="本机角色">{{status.role}}</el-descriptions-item>
+                  <el-descriptions-item label="对端状态">{{status.peerState}}</el-descriptions-item>
+                  <el-descriptions-item label="当前服务节点">{{status.currentNode}}</el-descriptions-item>
+                  <el-descriptions-item label="服务入口">{{status.vip}}</el-descriptions-item>
+                  <el-descriptions-item label="最近切换时间">{{status.lastSwitchTime}}</el-descriptions-item>
+                  <el-descriptions-item label="最近切换原因">{{status.lastSwitchReason}}</el-descriptions-item>
+                </el-descriptions>
+              </el-card>
+            </el-col>
+          </el-row>
+        </el-tab-pane>
 
-      <el-col :span="16">
-        <el-card class="card">
+        <el-tab-pane label="基础配置" name="basic">
           <HotStandbyForm ref="formRef" :disabled="!status.enabled" :value="config" @update="onConfigUpdate" />
-        </el-card>
+        </el-tab-pane>
 
-        <el-row :gutter="16" class="mt-16">
-          <el-col :span="12">
-            <HealthCheckCard :value="config.healthCheck" :disabled="!status.enabled" @update="onHealthUpdate" />
-          </el-col>
-          <el-col :span="12">
-            <SyncConfigCard :value="config.sync" @update="onSyncUpdate" :disabled="!status.enabled" />
-          </el-col>
-        </el-row>
-      </el-col>
-    </el-row>
+        <el-tab-pane label="健康检查与同步" name="health">
+          <el-row :gutter="16">
+            <el-col :span="12">
+              <HealthCheckCard :value="config.healthCheck" :disabled="!status.enabled" @update="onHealthUpdate" />
+            </el-col>
+            <el-col :span="12">
+              <SyncConfigCard :value="config.sync" @update="onSyncUpdate" :disabled="!status.enabled" />
+            </el-col>
+          </el-row>
+        </el-tab-pane>
 
-    <div class="mt-20">
-      <AuditTable />
-    </div>
+        <el-tab-pane label="切换记录 / 审计日志" name="audit">
+          <AuditTable />
+        </el-tab-pane>
+      </el-tabs>
+    </el-card>
 
     <ConfirmSwitchModal ref="switchModal" @confirm="doManualSwitch" />
     <ConfirmDisableModal ref="disableModal" @confirm="doDisable" />
