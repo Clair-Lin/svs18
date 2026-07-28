@@ -9,7 +9,6 @@
 
     <div class="action-bar">
       <el-button icon="Refresh" @click="refreshStatus" circle title="刷新状态" />
-      <el-button type="primary" @click="saveConfig" :loading="saving">保存配置</el-button>
       <el-button type="danger" @click="openSwitch" :disabled="!status.enabled">手工切换</el-button>
       <div class="toggle-inline">
         <span class="toggle-label">双机热备</span>
@@ -18,7 +17,7 @@
     </div>
 
     <el-card class="card">
-      <el-tabs v-model="activeTab" type="card">
+      <el-tabs v-model="activeTab">
         <el-tab-pane label="状态总览" name="overview">
           <el-row :gutter="20" class="overview-row">
             <el-col :span="10">
@@ -34,6 +33,10 @@
         </el-tab-pane>
 
         <el-tab-pane label="基础配置" name="basic">
+          <div class="basic-header">
+            <span>基础配置 </span>
+            <el-button type="primary" @click="saveConfig" :loading="saving">保存配置</el-button>
+          </div>
           <HotStandbyForm ref="formRef" :disabled="!status.enabled" :value="config" @update="onConfigUpdate" />
         </el-tab-pane>
 
@@ -125,12 +128,16 @@ onMounted(load)
 <style scoped>
 .page-header { margin-bottom: 16px }
 .muted { color: var(--el-text-color-secondary); margin: 0 }
-.action-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 20px }
+.action-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px }
 .toggle-inline { display: flex; align-items: center; gap: 8px }
 .toggle-label { color: var(--el-text-color-secondary); font-size: 14px }
 .card { margin-bottom: 0; border-color: transparent; box-shadow: none }
 .el-card__body { padding: 0 }
-.el-tabs--card .el-tabs__header { border-bottom-color: transparent }
-.overview-row { margin-bottom: 20px }
-.sync-panel { margin-top: 20px }
+.el-tabs--border-card .el-tabs__header, .el-tabs--card .el-tabs__header { border-bottom-color: transparent }
+.el-tabs__item { border: 1px solid transparent; border-radius: 4px 4px 0 0; margin-right: 8px }
+.el-tabs__item.is-active { background: #ffffff; border-color: #dfe4ed; color: var(--el-color-primary); }
+.el-tabs__header { margin-bottom: 0 }
+.basic-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid #f0f2f5; background: #fff }
+.overview-row { margin-bottom: 16px }
+.sync-panel { margin-top: 16px }
 </style>
