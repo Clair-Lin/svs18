@@ -7,37 +7,47 @@
       </div>
     </div>
 
-    <div class="action-bar">
-      <el-button icon="Refresh" @click="refreshStatus" circle title="刷新状态" />
-      <el-button type="danger" @click="openSwitch" :disabled="!status.enabled">手工切换</el-button>
-      <div class="toggle-inline">
-        <span class="toggle-label">双机热备</span>
-        <el-switch v-model="status.enabled" active-text="启用" inactive-text="停用" @change="toggleEnable" />
-      </div>
-    </div>
-
     <el-card class="card">
       <el-tabs v-model="activeTab">
-        <el-tab-pane label="状态总览" name="overview">
-          <el-row :gutter="20" class="overview-row">
-            <el-col :span="10">
-              <StatusOverview :data="status" />
-            </el-col>
-            <el-col :span="14">
-              <HealthCheckCard :value="config.healthCheck" :disabled="!status.enabled" @update="onHealthUpdate" />
-            </el-col>
-          </el-row>
-          <div class="sync-panel">
-            <SyncConfigCard :value="config.sync" @update="onSyncUpdate" :disabled="!status.enabled" />
-          </div>
-        </el-tab-pane>
-
         <el-tab-pane label="基础配置" name="basic">
           <div class="basic-header">
-            <span>基础配置 </span>
-            <el-button type="primary" @click="saveConfig" :loading="saving">保存配置</el-button>
+            <div class="enable-line">
+              <span class="enable-label">高可用开关</span>
+              <el-switch v-model="status.enabled" active-text="启用" inactive-text="停用" @change="toggleEnable" />
+            </div>
           </div>
-          <HotStandbyForm ref="formRef" :disabled="!status.enabled" :value="config" @update="onConfigUpdate" />
+
+          <div v-if="status.enabled" class="enabled-content">
+            <div class="basic-actions">
+              <el-button type="danger" @click="openSwitch">手工切换</el-button>
+              <el-button type="primary" @click="saveConfig" :loading="saving">保存配置</el-button>
+            </div>
+
+            <HotStandbyForm ref="formRef" :disabled="!status.enabled" :value="config" @update="onConfigUpdate" />
+
+            <div class="status-panel">
+              <el-card class="status-card">
+                <h4>状态总览</h4>
+                <el-descriptions column="2" border>
+                  <el-descriptions-item label="本机角色">{{status.role}}</el-descriptions-item>
+                  <el-descriptions-item label="对端状态">{{status.peerState}}</el-descriptions-item>
+                  <el-descriptions-item label="当前服务节点">{{status.currentNode}}</el-descriptions-item>
+                  <el-descriptions-item label="服务入口">{{status.vip}}</el-descriptions-item>
+                  <el-descriptions-item label="最近切换时间">{{status.lastSwitchTime}}</el-descriptions-item>
+                  <el-descriptions-item label="最近切换原因">{{status.lastSwitchReason}}</el-descriptions-item>
+                </el-descriptions>
+              </el-card>
+
+              <el-card class="sync-card">
+                <h4>同步范围配置</h4>
+                <SyncConfigCard :value="config.sync" @update="onSyncUpdate" :disabled="!status.enabled" />
+              </el-card>
+            </div>
+          </div>
+
+          <div v-else class="disabled-placeholder">
+            <p>当前未启用双机热备。请先启用后进行基础配置。</p>
+          </div>
         </el-tab-pane>
 
         <el-tab-pane label="切换记录 / 审计日志" name="audit">
@@ -53,9 +63,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import StatusOverview from '@/components/ha/StatusOverview.vue'
 import HotStandbyForm from '@/components/ha/HotStandbyForm.vue'
-import HealthCheckCard from '@/components/ha/HealthCheckCard.vue'
 import SyncConfigCard from '@/components/ha/SyncConfigCard.vue'
 import AuditTable from '@/components/ha/AuditTable.vue'
 import ConfirmSwitchModal from '@/components/ha/ConfirmSwitchModal.vue'
@@ -128,16 +136,17 @@ onMounted(load)
 <style scoped>
 .page-header { margin-bottom: 16px }
 .muted { color: var(--el-text-color-secondary); margin: 0 }
-.action-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px }
-.toggle-inline { display: flex; align-items: center; gap: 8px }
-.toggle-label { color: var(--el-text-color-secondary); font-size: 14px }
 .card { margin-bottom: 0; border-color: transparent; box-shadow: none }
 .el-card__body { padding: 0 }
 .el-tabs--border-card .el-tabs__header, .el-tabs--card .el-tabs__header { border-bottom-color: transparent }
 .el-tabs__item { border: 1px solid transparent; border-radius: 4px 4px 0 0; margin-right: 8px }
 .el-tabs__item.is-active { background: #ffffff; border-color: #dfe4ed; color: var(--el-color-primary); }
 .el-tabs__header { margin-bottom: 0 }
-.basic-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid #f0f2f5; background: #fff }
-.overview-row { margin-bottom: 16px }
-.sync-panel { margin-top: 16px }
-</style>
+.basic-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid #f0f2f5; background: #fff }
+.enable-line { display: flex; align-items: center; gap: 12px }
+.enable-label { font-size: 14px; color: var(--el-text-color-secondary) }
+.basic-actions { display: flex; gap: 12px; padding: 16px 24px; background: #fff; border-bottom: 1px solid #f0f2f5 }
+.enabled-content { padding: 24px 24px 16px }
+.status-panel { display: flex; gap: 16px; margin-top: 24px }
+.status-card, .sync-card { flex: 1; border-color: #e8edf3; box-shadow: none }
+.disabled-placeholder { padding: 24px; color: var(--el-text-color-secondary); background: #fafbfd; border: 1px solid #e8edf3; border-radius: 6px; }
