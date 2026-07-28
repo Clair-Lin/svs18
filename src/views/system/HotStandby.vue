@@ -5,10 +5,14 @@
         <h2>双机热备配置</h2>
         <p class="muted">双机热备用于两台签名验签服务器的主备部署和故障接替，提升服务连续性。</p>
       </div>
-      <div class="page-actions">
-        <el-button icon="Refresh" @click="refreshStatus" circle title="刷新状态" />
-        <el-button type="primary" @click="saveConfig" :loading="saving">保存配置</el-button>
-        <el-button type="danger" @click="openSwitch" :disabled="!status.enabled">手工切换</el-button>
+    </div>
+
+    <div class="action-bar">
+      <el-button icon="Refresh" @click="refreshStatus" circle title="刷新状态" />
+      <el-button type="primary" @click="saveConfig" :loading="saving">保存配置</el-button>
+      <el-button type="danger" @click="openSwitch" :disabled="!status.enabled">手工切换</el-button>
+      <div class="toggle-inline">
+        <span class="toggle-label">双机热备</span>
         <el-switch v-model="status.enabled" active-text="启用" inactive-text="停用" @change="toggleEnable" />
       </div>
     </div>
@@ -16,39 +20,21 @@
     <el-card class="card">
       <el-tabs v-model="activeTab" type="card">
         <el-tab-pane label="状态总览" name="overview">
-          <el-row :gutter="20">
-            <el-col :span="8">
+          <el-row :gutter="20" class="overview-row">
+            <el-col :span="10">
               <StatusOverview :data="status" />
             </el-col>
-            <el-col :span="16">
-              <el-card>
-                <h4>详细状态</h4>
-                <el-descriptions column="2" border>
-                  <el-descriptions-item label="本机角色">{{status.role}}</el-descriptions-item>
-                  <el-descriptions-item label="对端状态">{{status.peerState}}</el-descriptions-item>
-                  <el-descriptions-item label="当前服务节点">{{status.currentNode}}</el-descriptions-item>
-                  <el-descriptions-item label="服务入口">{{status.vip}}</el-descriptions-item>
-                  <el-descriptions-item label="最近切换时间">{{status.lastSwitchTime}}</el-descriptions-item>
-                  <el-descriptions-item label="最近切换原因">{{status.lastSwitchReason}}</el-descriptions-item>
-                </el-descriptions>
-              </el-card>
+            <el-col :span="14">
+              <HealthCheckCard :value="config.healthCheck" :disabled="!status.enabled" @update="onHealthUpdate" />
             </el-col>
           </el-row>
+          <div class="sync-panel">
+            <SyncConfigCard :value="config.sync" @update="onSyncUpdate" :disabled="!status.enabled" />
+          </div>
         </el-tab-pane>
 
         <el-tab-pane label="基础配置" name="basic">
           <HotStandbyForm ref="formRef" :disabled="!status.enabled" :value="config" @update="onConfigUpdate" />
-        </el-tab-pane>
-
-        <el-tab-pane label="健康检查与同步" name="health">
-          <el-row :gutter="16">
-            <el-col :span="12">
-              <HealthCheckCard :value="config.healthCheck" :disabled="!status.enabled" @update="onHealthUpdate" />
-            </el-col>
-            <el-col :span="12">
-              <SyncConfigCard :value="config.sync" @update="onSyncUpdate" :disabled="!status.enabled" />
-            </el-col>
-          </el-row>
         </el-tab-pane>
 
         <el-tab-pane label="切换记录 / 审计日志" name="audit">
@@ -137,10 +123,14 @@ onMounted(load)
 </script>
 
 <style scoped>
-.page-header{ display:flex; justify-content:space-between; align-items:center }
-.muted{ color:var(--el-text-color-secondary); margin:0 }
-.page-actions{ display:flex; gap:8px; align-items:center }
-.card{ margin-bottom:16px }
-.mt-16{ margin-top:16px }
-.mt-20{ margin-top:20px }
+.page-header { margin-bottom: 16px }
+.muted { color: var(--el-text-color-secondary); margin: 0 }
+.action-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 20px }
+.toggle-inline { display: flex; align-items: center; gap: 8px }
+.toggle-label { color: var(--el-text-color-secondary); font-size: 14px }
+.card { margin-bottom: 0; border-color: transparent; box-shadow: none }
+.el-card__body { padding: 0 }
+.el-tabs--card .el-tabs__header { border-bottom-color: transparent }
+.overview-row { margin-bottom: 20px }
+.sync-panel { margin-top: 20px }
 </style>
