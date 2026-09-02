@@ -532,8 +532,8 @@ let memoryInstance = null
 let diskInstance = null
 
 const deviceBasic = ref({
-  productName: 'SVS电子签章服务器',
-  productModel: 'SVS-1000',
+  productName: '签名验签服务器',
+  productModel: 'OLYM-SVS',
   softwareVersion: 'V1.9.1',
   health: '正常',
   cpuModel: 'Intel(R) Xeon(R) CPU E5-2650 v4 @ 2.20GHz',
