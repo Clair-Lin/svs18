@@ -1,14 +1,14 @@
 <template>
-  <div class="system-config">
-    <div class="page-tabs-shell page-tabs-shell--content-card">
-      <el-tabs v-model="activeTab" class="system-config-tabs">
-        <el-tab-pane name="api-auth" lazy>
-          <template #label>接口鉴权</template>
-          <SystemApiAuthConfig />
+  <div class="system-service-config">
+    <div class="page-tabs-shell">
+      <el-tabs v-model="activeTab" class="system-service-tabs">
+        <el-tab-pane name="service" lazy>
+          <template #label>服务管理</template>
+          <ServiceManage />
         </el-tab-pane>
-        <el-tab-pane name="cert-validation" lazy>
-          <template #label>证书校验</template>
-          <SystemCertValidationConfig />
+        <el-tab-pane name="pool" lazy>
+          <template #label>连接池配置</template>
+          <PoolConfig />
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -19,23 +19,23 @@
 import { ref, watch, onMounted, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { setPageBreadcrumbItems } from '@/composables/pageBreadcrumb'
-import SystemApiAuthConfig from './general/SystemApiAuthConfig.vue'
-import SystemCertValidationConfig from './general/SystemCertValidationConfig.vue'
+import ServiceManage from './ServiceManage.vue'
+import PoolConfig from './PoolConfig.vue'
 
-const TAB_NAMES = ['api-auth', 'cert-validation']
+const TAB_NAMES = ['service', 'pool']
 
 const tabCopy = {
-  'api-auth': '接口鉴权',
-  'cert-validation': '证书校验配置'
+  service: '服务管理',
+  pool: '连接池配置'
 }
 
 const route = useRoute()
 const router = useRouter()
-const activeTab = ref('api-auth')
+const activeTab = ref('service')
 
 function tabFromRoute () {
   const t = route.query.tab
-  return TAB_NAMES.includes(t) ? t : 'api-auth'
+  return TAB_NAMES.includes(t) ? t : 'service'
 }
 
 onMounted(() => {
@@ -53,15 +53,15 @@ watch(activeTab, (val) => {
   const cur = tabFromRoute()
   if (val === cur) return
   router.replace({
-    path: '/system/config',
-    query: val === 'api-auth' ? {} : { tab: val }
+    path: '/system/service-config',
+    query: val === 'service' ? {} : { tab: val }
   })
 })
 
 watchEffect(() => {
   setPageBreadcrumbItems([
     { label: '系统管理' },
-    { label: '系统配置' },
+    { label: '服务配置' },
     { label: tabCopy[activeTab.value] }
   ])
 })
@@ -70,7 +70,7 @@ watchEffect(() => {
 <style lang="scss" scoped>
 @import '@/styles/variables.scss';
 
-.system-config {
+.system-service-config {
   :deep(.el-tabs__header) {
     margin-bottom: 16px;
   }

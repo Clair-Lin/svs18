@@ -1,17 +1,27 @@
 <template>
   <div class="whitelist-config">
-    <div class="page-card">
-      <div class="card-title">白名单配置</div>
+    <div class="page-card whitelist-card">
+      <div class="whitelist-tip">
+        <el-icon class="whitelist-tip__icon"><InfoFilled /></el-icon>
+        <div class="whitelist-tip__text">白名单仅针对签名验签运算服务接口</div>
+        <el-tooltip placement="top" effect="dark" :show-after="200" popper-class="whitelist-help-tooltip">
+          <template #content>
+            <div class="whitelist-help-content">
+              <div>白名单配置用于限制可访问签名验签服务接口的来源地址，该功能仅针对 <strong>签名验签运算服务</strong>！</div>
+              <div>配置白名单后，只有在白名单内的ip才能调用 <strong>签名验签运算服务</strong>，其他服务不受影响！</div>
+            </div>
+          </template>
+          <span class="whitelist-tip__help">?</span>
+        </el-tooltip>
+      </div>
 
       <div class="toolbar">
-        <el-button type="primary" @click="handleOpenAdd">
-          新增
-        </el-button>
+        <el-button type="primary" @click="handleOpenAdd">新增</el-button>
         <el-button
           :disabled="!selectedRows.length"
           @click="batchDelete"
         >
-          删除
+          批量删除
         </el-button>
       </div>
 
@@ -21,6 +31,8 @@
         border
         stripe
         row-key="id"
+        class="whitelist-table"
+        empty-text="暂无数据"
         @selection-change="onSelectionChange"
       >
         <el-table-column type="selection" width="48" reserve-selection />
@@ -29,7 +41,7 @@
             {{ row.segment }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
             <el-button type="danger" size="small" link @click="confirmDelete(row)">
               删除
@@ -94,6 +106,7 @@
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { InfoFilled } from '@element-plus/icons-vue'
 import {
   parseCommaSeparatedSegments,
   findOverlappingRow,
@@ -131,11 +144,7 @@ function genId () {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 }
 
-const ipList = ref([
-  { id: '1', segment: '127.0.0.1' },
-  { id: '2', segment: '192.168.1.100' },
-  { id: '3', segment: '10.0.0.10' }
-])
+const ipList = ref([])
 
 const paginatedList = computed(() => {
   const start = (page.value - 1) * pageSize.value
@@ -244,12 +253,69 @@ function batchDelete () {
 <style lang="scss" scoped>
 @import '@/styles/variables.scss';
 
+.whitelist-card {
+  padding: 16px 18px 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.whitelist-tip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  margin-bottom: 16px;
+  background: #e6f4ff;
+  color: $text-primary;
+  line-height: 1.45;
+}
+
+.whitelist-tip__icon {
+  color: $primary-color;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.whitelist-tip__text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.whitelist-tip__help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 2px;
+  border: 1px solid $primary-color;
+  border-radius: 50%;
+  color: $primary-color;
+  font-size: 12px;
+  line-height: 1;
+  cursor: help;
+}
+
 .toolbar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+:deep(.whitelist-table) {
+  .el-table__header-wrapper th.el-table__cell {
+    background-color: #f5f5f5 !important;
+    color: $text-primary;
+    font-weight: 500;
+  }
+
+  .el-table__empty-block {
+    min-height: 286px;
+  }
+
+  .el-table__empty-text {
+    color: $text-primary;
+  }
 }
 
 .pagination {

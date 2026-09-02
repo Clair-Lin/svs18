@@ -1,7 +1,7 @@
 <template>
   <div class="device-inspect-page">
     <div class="device-inspect-page__toolbar">
-    <div class="search-area">
+      <div class="search-area">
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="检测类型">
           <el-select
@@ -42,30 +42,30 @@
         </el-form-item>
       </el-form>
     </div>
-
-    <div class="action-bar">
-      <el-button type="primary" :loading="detecting" @click="runInspect">
-        {{ detecting ? '检测中...' : '立即检测' }}
-      </el-button>
-      <el-button @click="openAutoDialog">自动检测</el-button>
-    </div>
     </div>
 
     <div class="list-section">
+      <div class="action-bar">
+        <el-button type="primary" :loading="detecting" @click="runInspect">
+          {{ detecting ? '检测中...' : '立即检测' }}
+        </el-button>
+        <el-button @click="openAutoDialog">自动检测</el-button>
+      </div>
       <el-table
-        :data="pagedList"
+        :data="pagedDisplayList"
         border
         class="history-table"
         size="small"
         style="width: 100%"
       >
-        <el-table-column prop="finishedAt" label="检测时间" />
-        <el-table-column label="检测类型">
+        <el-table-column prop="startedAt" label="检测开始时间" min-width="200" />
+        <el-table-column prop="finishedAt" label="检测结束时间" min-width="200" />
+        <el-table-column label="检测类型" min-width="170">
           <template #default="{ row }">
             {{ detectTypeLabel(row) }}
           </template>
         </el-table-column>
-        <el-table-column label="检测结果">
+        <el-table-column label="检测结果" min-width="170">
           <template #default="{ row }">
             <span class="status-cell" :class="overallResultClass(row)">
               <span class="status-dot" aria-hidden="true" />
@@ -73,7 +73,7 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" align="center">
+        <el-table-column label="操作" width="120" align="center">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="goDetail(row)">详情</el-button>
           </template>
@@ -81,7 +81,7 @@
       </el-table>
 
       <div class="pagination">
-      <el-pagination
+        <el-pagination
         v-model:current-page="page"
         v-model:page-size="pageSize"
         :total="filteredList.length"
@@ -89,7 +89,7 @@
         layout="total, sizes, prev, pager, next"
         background
         small
-      />
+        />
       </div>
     </div>
 
@@ -210,6 +210,21 @@ const pagedList = computed(() => {
   return filteredList.value.slice(start, start + pageSize.value)
 })
 
+const pagedDisplayList = computed(() =>
+  pagedList.value.map((row) => ({
+    ...row,
+    startedAt: row.startedAt || inferStartedAt(row.finishedAt)
+  }))
+)
+
+function inferStartedAt (finishedAt) {
+  if (!finishedAt) return '—'
+  const end = new Date(String(finishedAt).replace(/-/g, '/'))
+  if (Number.isNaN(end.getTime())) return finishedAt
+  const offsetSeconds = 1 + Math.abs(String(finishedAt).charCodeAt(String(finishedAt).length - 1) || 0) % 2
+  return formatDateTime(new Date(end.getTime() - offsetSeconds * 1000))
+}
+
 function handleSearch () {
   appliedFilters.detectType = searchForm.detectType
   appliedFilters.result = searchForm.result
@@ -324,14 +339,14 @@ defineExpose({ refresh, runInspect })
   width: 100%;
 
   &__toolbar {
-    padding: 0 $spacing-lg;
+    margin-bottom: 16px;
   }
 
   .search-area {
-    background: #fafafa;
+    background: #fff;
     padding: 16px;
-    border-radius: 4px;
-    margin-bottom: 16px;
+    border-radius: 0;
+    box-shadow: $box-shadow;
   }
 
   .search-form {
@@ -346,13 +361,18 @@ defineExpose({ refresh, runInspect })
 
   .action-bar {
     display: flex;
-    gap: 12px;
-    margin-bottom: 16px;
+    gap: 10px;
+    padding: 16px 20px;
+    margin-bottom: 0;
+    background: #fff;
   }
 
   .list-section {
     width: 100%;
-    padding: 0 $spacing-lg;
+    min-height: 414px;
+    padding: 0 0 16px;
+    background: #fff;
+    box-shadow: $box-shadow;
   }
 
   .history-table {
@@ -378,8 +398,8 @@ defineExpose({ refresh, runInspect })
   }
 
   .pagination {
-    margin-top: 16px;
-    padding: 0 $spacing-lg;
+    margin-top: 164px;
+    padding: 0 26px;
     display: flex;
     justify-content: flex-end;
   }

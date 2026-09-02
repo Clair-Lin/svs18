@@ -221,7 +221,7 @@
           </template>
 
           <!-- SM9分片主密钥 -->
-          <template v-if="isSm9ShardMasterKey">
+          <!-- <template v-if="isSm9ShardMasterKey">
             <el-form-item label="主密钥" prop="masterKeyRef">
               <el-select
                 v-model="keyForm.masterKeyRef"
@@ -237,7 +237,7 @@
                 />
               </el-select>
             </el-form-item>
-          </template>
+          </template> -->
 
           <el-form-item label="密钥访问口令" prop="password">
             <el-input
@@ -387,7 +387,7 @@ const KEY_TYPE = {
   AES: 'AES',
   SM9_MASTER: 'SM9主密钥',
   SM9_IDENTITY: 'SM9标识密钥',
-  SM9_SHARD: 'SM9分片主密钥'
+  // SM9_SHARD: 'SM9分片主密钥'
 }
 
 /** PQC 体系密钥：类型即算法变体，生成时无单独长度选择 */
@@ -403,12 +403,7 @@ const PQC_KEY_OPTIONS = [
   { label: 'SLH_DSA_SHA2_256f', value: 'SLH_DSA_SHA2_256f' },
   { label: 'AIGIS_SIG1', value: 'AIGIS_SIG1' },
   { label: 'AIGIS_SIG2', value: 'AIGIS_SIG2' },
-  { label: 'AIGIS_SIG3', value: 'AIGIS_SIG3' },
-  { label: 'LMS_SM3_H5_W1', value: 'LMS_SM3_H5_W1' },
-  { label: 'LMS_SM3_H5_W2', value: 'LMS_SM3_H5_W2' },
-  { label: 'LMS_SM3_H5_W4', value: 'LMS_SM3_H5_W4' },
-  { label: 'LMS_SM3_H5_W8', value: 'LMS_SM3_H5_W8' },
-  { label: 'LMS_SM3_H5_W8_H5_W8', value: 'LMS_SM3_H5_W8_H5_W8' }
+  { label: 'AIGIS_SIG3', value: 'AIGIS_SIG3' }
 ]
 
 const PQC_KEY_TYPES = PQC_KEY_OPTIONS.map((o) => o.value)
@@ -438,7 +433,7 @@ const KEY_TYPE_GROUPS = [
 const IBC_KEY_TYPE_OPTIONS = [
   { label: 'SM9主密钥', value: KEY_TYPE.SM9_MASTER },
   { label: 'SM9标识密钥', value: KEY_TYPE.SM9_IDENTITY },
-  { label: 'SM9分片主密钥', value: KEY_TYPE.SM9_SHARD }
+  // { label: 'SM9分片主密钥', value: KEY_TYPE.SM9_SHARD }
 ]
 
 const IBC_KEY_TYPES = [KEY_TYPE.SM9_MASTER, KEY_TYPE.SM9_IDENTITY, KEY_TYPE.SM9_SHARD]

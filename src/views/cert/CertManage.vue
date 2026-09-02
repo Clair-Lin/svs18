@@ -1,6 +1,6 @@
 <template>
   <div class="cert-manage">
-    <div class="page-card">
+    <div class="page-tabs-shell page-tabs-shell--content-card">
       <el-tabs v-model="pageTab" class="cert-page-tabs">
         <el-tab-pane label="证书管理" name="cert" lazy>
           <div class="search-area">
@@ -23,7 +23,7 @@
               </el-form-item>
               <el-form-item>
                 <el-button type="primary" @click="handleSearch">
-                  <el-icon><Search /></el-icon>
+                  <el-icon>dSearch /></el-icon>
                   查询
                 </el-button>
                 <el-button @click="handleReset">重置</el-button>
@@ -107,8 +107,8 @@
             <el-table-column label="状态" width="120">
               <template #default="{ row }">
                 <span class="apply-status" :class="row.applyStatus === '已签发' ? 'issued' : 'pending'">
-                  <el-icon v-if="row.applyStatus === '已签发'"><CircleCheck /></el-icon>
-                  <el-icon v-else><CircleClose /></el-icon>
+                  <el-icon v-if="row.applyStatus === '已签发'">dCircleCheck /></el-icon>
+                  <el-icon v-else>dCircleClose /></el-icon>
                   {{ row.applyStatus }}
                 </span>
               </template>
@@ -340,7 +340,7 @@ const formatNow = () => {
 
 /** 将拆分字段组装为 DN（仅含已填项；CN、C 必填由表单保证）；可选邮箱 E= */
 const buildSubjectDnFromForm = (f) => {
-  const esc = (v) => String(v || '').replace(/([/+,;"<>\\])/g, '\\$1')
+  const esc = (v) => String(v || '').replace(/([/+,;"d>\\])/g, '\\$1')
   const segs = []
   if (f.dnC) segs.push(`C=${esc(f.dnC)}`)
   if (String(f.dnST || '').trim()) segs.push(`ST=${esc(f.dnST.trim())}`)
@@ -367,8 +367,8 @@ const activeTabBreadcrumb = computed(() =>
 
 watchEffect(() => {
   setPageBreadcrumbItems([
-    { label: '签名验签服务' },
-    { label: '证书管理' },
+    { label: '签名验签管理' },
+    { label: '应用证书管理' },
     { label: activeTabBreadcrumb.value }
   ])
 })

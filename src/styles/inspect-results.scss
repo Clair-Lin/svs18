@@ -1,6 +1,9 @@
 @import '@/styles/variables.scss';
 
 .inspect-results-root {
+  background: #fff;
+  border-radius: 0;
+
   .detect-stat-strip {
     margin: 0;
     padding: 0;
@@ -22,27 +25,50 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 4px;
-    padding-bottom: 10px;
+    min-height: 48px;
+    padding: 0 20px;
     border-bottom: 1px solid $border-light;
   }
 
   .results-module__toolbar-title {
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 15px;
+    font-weight: 700;
     color: $text-primary;
   }
 
   .results-module__body {
-    padding-top: 4px;
+    padding: 20px;
   }
 
   .results-module__progress {
     margin-bottom: 8px;
   }
 
-  .results-module__hint {
-    border: 1px solid rgba(64, 158, 255, 0.35);
+  .results-module__empty {
+    display: flex;
+    min-height: 140px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 0 30px;
+  }
+
+  .results-module__empty-icon {
+    display: flex;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    border-radius: 50%;
+    background: #f5f7fa;
+    color: #c0c4cc;
+  }
+
+  .results-module__empty-text {
+    font-size: 13px;
+    line-height: 1.4;
+    color: $text-muted;
   }
 
   .progress-wrap {

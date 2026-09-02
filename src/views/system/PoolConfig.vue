@@ -1,8 +1,6 @@
 <template>
   <div class="pool-config">
     <div class="page-card">
-      <div class="card-title">连接池配置</div>
-
       <div class="pool-setting-row">
         <span class="pool-label">密码运算连接池：</span>
         <el-input

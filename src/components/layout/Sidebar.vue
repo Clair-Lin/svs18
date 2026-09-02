@@ -21,23 +21,23 @@
       <el-sub-menu index="sign-service">
         <template #title>
           <el-icon><Edit /></el-icon>
-          <span>签名验签服务</span>
+          <span>签名验签管理</span>
         </template>
         <el-menu-item index="/key/manage">
           <template #title>密钥管理<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></template>
         </el-menu-item>
-        <el-menu-item index="/cert/manage">证书管理</el-menu-item>
+        <el-menu-item index="/cert/manage">应用证书管理</el-menu-item>
         <el-menu-item index="/cert/user">用户证书管理</el-menu-item>
-        <el-menu-item index="/cert/ca">CA根证管理</el-menu-item>
+        <el-menu-item index="/cert/ca">CA证书管理</el-menu-item>
       </el-sub-menu>
 
       <el-sub-menu index="network">
         <template #title>
           <el-icon><Connection /></el-icon>
-          <span>网络配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></span>
+          <span>网络管理</span>
         </template>
         <el-menu-item index="/network/interface">
-          <template #title>接口管理</template>
+          <template #title>网口管理</template>
         </el-menu-item>
         <el-menu-item index="/network/route">路由配置</el-menu-item>
       </el-sub-menu>
@@ -49,16 +49,11 @@
         </template>
         <el-menu-item index="/system/admin">管理员管理</el-menu-item>
         <el-menu-item index="/system/permission">权限管理</el-menu-item>
-        <el-menu-item index="/system/info">系统信息</el-menu-item>
-        <el-menu-item index="/system/service">服务管理</el-menu-item>
-        <el-menu-item index="/system/whitelist">白名单配置</el-menu-item>
-        <el-menu-item index="/system/ntp">NTP时间源管理</el-menu-item>
-        <el-menu-item index="/system/snmp">SNMP管理</el-menu-item>
-        <el-menu-item index="/system/syslog">Syslog配置</el-menu-item>
-        <el-menu-item index="/system/pool">连接池配置</el-menu-item>
-        <el-menu-item index="/system/inspect">检测中心</el-menu-item>
-        <el-menu-item index="/system/config">系统配置</el-menu-item>
-        <el-menu-item index="/system/ha">高可用配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item>
+        <el-menu-item index="/system/service-config">服务配置</el-menu-item>
+        <el-menu-item index="/system/status">检测管理</el-menu-item>
+        <el-menu-item index="/system/settings">系统设置</el-menu-item>
+        <el-menu-item index="/system/advanced">高级设置</el-menu-item>
+        <!-- <el-menu-item index="/system/ha">高可用配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item> -->
       </el-sub-menu>
     </el-menu>
 
@@ -89,13 +84,18 @@ const activeMenu = computed(() => {
   if (route.path.startsWith('/network/interface')) return '/network/interface'
   if (route.path.startsWith('/system/network')) return '/network/interface'
   if (route.path.startsWith('/network/route')) return '/network/route'
-  if (route.path.startsWith('/system/config')) return '/system/config'
-  if (route.path.startsWith('/system/general')) return '/system/config'
+  if (route.path.startsWith('/system/config')) return '/system/advanced'
+  if (route.path.startsWith('/system/general')) return '/system/advanced'
+  if (route.path.startsWith('/system/whitelist')) return '/system/advanced'
   if (route.path.startsWith('/system/ha')) return '/system/ha'
   if (route.path.startsWith('/system/hot-standby')) return '/system/ha'
   if (route.path.startsWith('/system/cluster')) return '/system/ha'
-  if (route.path.startsWith('/system/inspect')) return '/system/inspect'
-  if (route.path.startsWith('/system/detect')) return '/system/inspect'
+  if (route.path.startsWith('/system/inspect')) return '/system/status'
+  if (route.path.startsWith('/system/detect')) return '/system/status'
+  if (route.path.startsWith('/system/service-config')) return '/system/service-config'
+  if (route.path.startsWith('/system/status')) return '/system/status'
+  if (route.path.startsWith('/system/settings')) return '/system/settings'
+  if (route.path.startsWith('/system/advanced')) return '/system/advanced'
   return route.path
 })
 </script>

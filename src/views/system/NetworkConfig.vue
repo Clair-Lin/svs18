@@ -1,6 +1,6 @@
 <template>
   <div class="network-config">
-    <div class="page-card">
+    <div class="page-tabs-shell page-tabs-shell--content-card">
       <el-tabs v-model="activeTab" class="network-page-tabs">
         <el-tab-pane name="port" lazy>
           <template #label>网口配置</template>
@@ -78,8 +78,8 @@ watch(activeTab, (val) => {
 
 watchEffect(() => {
   setPageBreadcrumbItems([
-    { label: '网络配置' },
-    { label: '接口管理' },
+    { label: '网络管理' },
+    { label: '网口管理' },
     { label: tabCopy[activeTab.value] }
   ])
 })

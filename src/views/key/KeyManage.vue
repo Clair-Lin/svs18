@@ -1,7 +1,7 @@
 <template>
   <div class="key-manage">
     <KeyManageSecurityModals ref="securityModalsRef" />
-    <div class="page-card">
+    <div class="page-tabs-shell page-tabs-shell--content-card">
       <el-tabs v-model="activeTab" class="key-manage-page-tabs">
         <el-tab-pane name="0029" lazy>
           <template #label>
@@ -68,7 +68,7 @@ watch(activeTab, (val) => {
 
 watchEffect(() => {
   setPageBreadcrumbItems([
-    { label: '签名验签服务' },
+    { label: '签名验签管理' },
     { label: '密钥管理' },
     { label: tabCopy[activeTab.value].breadcrumb }
   ])
