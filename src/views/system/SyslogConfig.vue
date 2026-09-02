@@ -1,8 +1,6 @@
 <template>
   <div class="syslog-config">
     <div class="page-card">
-      <div class="card-title">Syslog配置</div>
-
       <div class="toolbar">
         <el-button type="primary" link class="add-btn" @click="onAdd">
           <el-icon><Plus /></el-icon>

@@ -194,34 +194,8 @@
             </el-form-item>
           </template>
 
-          <!-- SM9标识密钥 -->
-          <template v-if="isSm9IdentityKey">
-            <el-form-item label="私钥标识" prop="privateKeyIdentity">
-              <el-input
-                v-model="keyForm.privateKeyIdentity"
-                clearable
-                placeholder="请输入私钥标识"
-              />
-            </el-form-item>
-            <el-form-item label="主密钥" prop="masterKeyRef">
-              <el-select
-                v-model="keyForm.masterKeyRef"
-                style="width: 100%"
-                placeholder="请选择主密钥"
-                clearable
-              >
-                <el-option
-                  v-for="mk in sm9MasterKeyOptions"
-                  :key="mk.keyId"
-                  :label="mk.paramDomain"
-                  :value="mk.keyId"
-                />
-              </el-select>
-            </el-form-item>
-          </template>
-
           <!-- SM9分片主密钥 -->
-          <template v-if="isSm9ShardMasterKey">
+          <!-- <template v-if="isSm9ShardMasterKey">
             <el-form-item label="主密钥" prop="masterKeyRef">
               <el-select
                 v-model="keyForm.masterKeyRef"
@@ -237,7 +211,7 @@
                 />
               </el-select>
             </el-form-item>
-          </template>
+          </template> -->
 
           <el-form-item label="密钥访问口令" prop="password">
             <el-input
@@ -346,16 +320,6 @@
             <span class="detail-p2-label">参数版本</span>
             <span class="detail-p2-value">{{ currentKey.paramVersion || '—' }}</span>
           </div>
-          <template v-if="currentKey.keyType === KEY_TYPE.SM9_IDENTITY">
-            <div class="detail-p2-row">
-              <span class="detail-p2-label">私钥标识</span>
-              <span class="detail-p2-value">{{ currentKey.privateKeyIdentity }}</span>
-            </div>
-            <div class="detail-p2-row">
-              <span class="detail-p2-label">主密钥</span>
-              <span class="detail-p2-value">{{ formatMasterKeyRef(currentKey) }}</span>
-            </div>
-          </template>
           <template v-if="currentKey.keyType === KEY_TYPE.SM9_SHARD">
             <div class="detail-p2-row">
               <span class="detail-p2-label">主密钥</span>
@@ -386,8 +350,7 @@ const KEY_TYPE = {
   TDES: '3DES',
   AES: 'AES',
   SM9_MASTER: 'SM9主密钥',
-  SM9_IDENTITY: 'SM9标识密钥',
-  SM9_SHARD: 'SM9分片主密钥'
+  // SM9_SHARD: 'SM9分片主密钥'
 }
 
 /** PQC 体系密钥：类型即算法变体，生成时无单独长度选择 */
@@ -403,12 +366,7 @@ const PQC_KEY_OPTIONS = [
   { label: 'SLH_DSA_SHA2_256f', value: 'SLH_DSA_SHA2_256f' },
   { label: 'AIGIS_SIG1', value: 'AIGIS_SIG1' },
   { label: 'AIGIS_SIG2', value: 'AIGIS_SIG2' },
-  { label: 'AIGIS_SIG3', value: 'AIGIS_SIG3' },
-  { label: 'LMS_SM3_H5_W1', value: 'LMS_SM3_H5_W1' },
-  { label: 'LMS_SM3_H5_W2', value: 'LMS_SM3_H5_W2' },
-  { label: 'LMS_SM3_H5_W4', value: 'LMS_SM3_H5_W4' },
-  { label: 'LMS_SM3_H5_W8', value: 'LMS_SM3_H5_W8' },
-  { label: 'LMS_SM3_H5_W8_H5_W8', value: 'LMS_SM3_H5_W8_H5_W8' }
+  { label: 'AIGIS_SIG3', value: 'AIGIS_SIG3' }
 ]
 
 const PQC_KEY_TYPES = PQC_KEY_OPTIONS.map((o) => o.value)
@@ -437,11 +395,10 @@ const KEY_TYPE_GROUPS = [
 
 const IBC_KEY_TYPE_OPTIONS = [
   { label: 'SM9主密钥', value: KEY_TYPE.SM9_MASTER },
-  { label: 'SM9标识密钥', value: KEY_TYPE.SM9_IDENTITY },
-  { label: 'SM9分片主密钥', value: KEY_TYPE.SM9_SHARD }
+  // { label: 'SM9分片主密钥', value: KEY_TYPE.SM9_SHARD }
 ]
 
-const IBC_KEY_TYPES = [KEY_TYPE.SM9_MASTER, KEY_TYPE.SM9_IDENTITY, KEY_TYPE.SM9_SHARD]
+const IBC_KEY_TYPES = [KEY_TYPE.SM9_MASTER, KEY_TYPE.SM9_SHARD]
 
 /** SM9 固定密钥用途 */
 const SM9_KEY_USAGE = '签名验签'
@@ -501,7 +458,6 @@ const keyForm = reactive({
   password: '',
   paramDomain: '',
   paramVersion: '',
-  privateKeyIdentity: '',
   masterKeyRef: ''
 })
 
@@ -553,13 +509,6 @@ const formRules = computed(() => {
       paramVersion: [{ required: true, message: '请输入参数版本', trigger: 'blur' }]
     }
   }
-  if (isSm9IdentityKey.value) {
-    return {
-      ...ibcBase,
-      privateKeyIdentity: [{ required: true, message: '请输入私钥标识', trigger: 'blur' }],
-      masterKeyRef: [{ required: true, message: '请选择主密钥', trigger: 'change' }]
-    }
-  }
   if (isSm9ShardMasterKey.value) {
     return {
       ...ibcBase,
@@ -596,7 +545,6 @@ const isSymmetricKeyType = computed(() => SYMMETRIC_KEY_TYPES.includes(keyForm.k
 const isIbcKeyType = computed(() => IBC_KEY_TYPES.includes(keyForm.keyType))
 const isPqcKeyType = computed(() => PQC_KEY_TYPES.includes(keyForm.keyType))
 const isSm9MasterKey = computed(() => keyForm.keyType === KEY_TYPE.SM9_MASTER)
-const isSm9IdentityKey = computed(() => keyForm.keyType === KEY_TYPE.SM9_IDENTITY)
 const isSm9ShardMasterKey = computed(() => keyForm.keyType === KEY_TYPE.SM9_SHARD)
 
 const sm9MasterKeyOptions = computed(() =>
@@ -606,7 +554,6 @@ const sm9MasterKeyOptions = computed(() =>
 function resetIbcFields () {
   keyForm.paramDomain = ''
   keyForm.paramVersion = ''
-  keyForm.privateKeyIdentity = ''
   keyForm.masterKeyRef = ''
   keyForm.keySize = 256
 }
@@ -643,9 +590,6 @@ function getIbcValidateFields () {
   if (isSm9MasterKey.value) {
     return [...common, 'keySize', 'paramDomain', 'paramVersion']
   }
-  if (isSm9IdentityKey.value) {
-    return [...common, 'privateKeyIdentity', 'masterKeyRef']
-  }
   if (isSm9ShardMasterKey.value) {
     return [...common, 'masterKeyRef']
   }
@@ -680,14 +624,6 @@ function buildIbcKeyRow (now, addedTime) {
     }
   }
   const params = resolveIbcParamFromMaster(keyForm.masterKeyRef)
-  if (isSm9IdentityKey.value) {
-    return {
-      ...base,
-      ...params,
-      privateKeyIdentity: keyForm.privateKeyIdentity.trim(),
-      masterKeyRef: keyForm.masterKeyRef
-    }
-  }
   return {
     ...base,
     ...params,
@@ -745,20 +681,6 @@ const keyList = ref([
     masterKeyRef: '1763200100888001',
     addedTime: '2025-11-15 11:00:00',
     addedTimeMs: 1763181600000
-  },
-  {
-    index: 104,
-    keyId: '1763200150444002',
-    keyAlgorithm: 'SM9',
-    keyType: KEY_TYPE.SM9_IDENTITY,
-    keyUsage: SM9_KEY_USAGE,
-    keyLength: SM9_SYSTEM_KEY_LENGTH,
-    paramDomain: 'svs.sm9.domain.demo',
-    paramVersion: '1.0',
-    privateKeyIdentity: 'user-identity-001',
-    masterKeyRef: '1763200100888001',
-    addedTime: '2025-11-15 10:15:00',
-    addedTimeMs: 1763178900000
   },
   {
     index: 103,
@@ -850,7 +772,6 @@ const handleCreate = async () => {
     password: '',
     paramDomain: '',
     paramVersion: '',
-    privateKeyIdentity: '',
     masterKeyRef: ''
   })
   createDialogVisible.value = true

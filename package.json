@@ -1,6 +1,6 @@
 {
   "name": "svs-prototype",
-  "version": "1.7.1",
+  "version": "1.9.1",
   "description": "SVS电子签章服务器 - 签名验签系统原型",
   "type": "module",
   "scripts": {

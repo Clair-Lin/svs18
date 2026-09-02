@@ -1,8 +1,6 @@
 <template>
   <div class="service-manage">
     <div class="page-card">
-      <div class="card-title">服务管理</div>
-
       <el-table :data="serviceList" border class="service-table" empty-text="暂无数据">
         <el-table-column prop="ip" label="IP" min-width="140" show-overflow-tooltip />
         <el-table-column prop="port" label="端口" width="100" align="center" />

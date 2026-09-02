@@ -13,15 +13,12 @@
       </el-button>
     </div>
     <div class="results-module__body">
-      <el-alert
-        v-if="!detecting && !summary"
-        type="info"
-        :closable="false"
-        show-icon
-        class="results-module__hint"
-      >
-        {{ idleHint }}
-      </el-alert>
+      <div v-if="!detecting && !summary" class="results-module__empty">
+        <div class="results-module__empty-icon">
+          <el-icon :size="16"><Document /></el-icon>
+        </div>
+        <div class="results-module__empty-text">{{ idleHint }}</div>
+      </div>
 
       <div v-if="detecting || summary" class="progress-wrap results-module__progress">
         <el-progress
@@ -170,7 +167,8 @@ import {
   WarningFilled,
   Download,
   ArrowRight,
-  ArrowDown
+  ArrowDown,
+  Document
 } from '@element-plus/icons-vue'
 
 const props = defineProps({

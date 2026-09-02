@@ -1,7 +1,11 @@
 <template>
-  <div class="system-config">
-    <div class="page-tabs-shell page-tabs-shell--content-card">
-      <el-tabs v-model="activeTab" class="system-config-tabs">
+  <div class="system-advanced">
+    <div class="page-tabs-shell" :class="{ 'page-tabs-shell--content-card': activeTab !== 'whitelist' }">
+      <el-tabs v-model="activeTab" class="system-advanced-tabs">
+        <el-tab-pane name="whitelist" lazy>
+          <template #label>白名单配置</template>
+          <WhitelistConfig />
+        </el-tab-pane>
         <el-tab-pane name="api-auth" lazy>
           <template #label>接口鉴权</template>
           <SystemApiAuthConfig />
@@ -19,23 +23,25 @@
 import { ref, watch, onMounted, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { setPageBreadcrumbItems } from '@/composables/pageBreadcrumb'
+import WhitelistConfig from '@/views/whitelist/WhitelistConfig.vue'
 import SystemApiAuthConfig from './general/SystemApiAuthConfig.vue'
 import SystemCertValidationConfig from './general/SystemCertValidationConfig.vue'
 
-const TAB_NAMES = ['api-auth', 'cert-validation']
+const TAB_NAMES = ['whitelist', 'api-auth', 'cert-validation']
 
 const tabCopy = {
+  whitelist: '白名单配置',
   'api-auth': '接口鉴权',
-  'cert-validation': '证书校验配置'
+  'cert-validation': '证书校验'
 }
 
 const route = useRoute()
 const router = useRouter()
-const activeTab = ref('api-auth')
+const activeTab = ref('whitelist')
 
 function tabFromRoute () {
   const t = route.query.tab
-  return TAB_NAMES.includes(t) ? t : 'api-auth'
+  return TAB_NAMES.includes(t) ? t : 'whitelist'
 }
 
 onMounted(() => {
@@ -53,15 +59,15 @@ watch(activeTab, (val) => {
   const cur = tabFromRoute()
   if (val === cur) return
   router.replace({
-    path: '/system/config',
-    query: val === 'api-auth' ? {} : { tab: val }
+    path: '/system/advanced',
+    query: val === 'whitelist' ? {} : { tab: val }
   })
 })
 
 watchEffect(() => {
   setPageBreadcrumbItems([
     { label: '系统管理' },
-    { label: '系统配置' },
+    { label: '高级设置' },
     { label: tabCopy[activeTab.value] }
   ])
 })
@@ -70,7 +76,7 @@ watchEffect(() => {
 <style lang="scss" scoped>
 @import '@/styles/variables.scss';
 
-.system-config {
+.system-advanced {
   :deep(.el-tabs__header) {
     margin-bottom: 16px;
   }

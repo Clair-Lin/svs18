@@ -19,7 +19,7 @@
 
 <script setup>
 const deviceName = '签名验签服务器'
-const softwareVersion = '1.8.0'
+const softwareVersion = '1.9.1'
 </script>
 
 <style lang="scss" scoped>

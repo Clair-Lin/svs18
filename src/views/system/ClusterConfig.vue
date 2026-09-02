@@ -1,7 +1,5 @@
 <template>
   <div class="cluster-config">
-    <div class="card-title">集群管理</div>
-
     <template v-if="!cluster.active">
       <div class="empty-actions">
         <el-button type="primary" @click="openCreateDialog">创建集群</el-button>

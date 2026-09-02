@@ -1,41 +1,46 @@
 <template>
   <div class="service-detect-panel">
-    <el-alert type="warning" :closable="false" show-icon class="service-detect-panel__alert">
-      检测前请上传 <strong>CA 根证</strong> 和 <strong>证书管理</strong> 里面的证书。
-    </el-alert>
+    <section class="service-detect-card service-detect-card--config">
+      <div class="service-detect-card__header">
+        <h3>一键检测</h3>
+      </div>
+      <div class="service-detect-card__body">
+        <el-alert type="warning" :closable="false" show-icon class="service-detect-panel__alert">
+          检测前需上传 <strong>CA 根证</strong> 和 <strong>证书管理里面的证书</strong>。
+        </el-alert>
 
-    <div class="inspect-config-panel">
-      <div class="inspect-config-panel__action-row">
-        <div class="cert-picker-inline">
-          <span class="inspect-config-label">证书</span>
-          <el-input
-            :model-value="selectedCertDisplay"
-            readonly
-            placeholder="请选择证书"
-            class="cert-picker-input"
-            @click="openCertDialog"
-          >
-            <template #append>
-              <el-button @click="openCertDialog">...</el-button>
-            </template>
-          </el-input>
-        </div>
-        <div class="inspect-config-panel__action-end">
-          <el-tooltip :disabled="!startBlocked" content="请先选择证书" placement="top">
-            <span>
-              <el-button
-                type="primary"
-                :loading="detecting"
-                :disabled="startDisabled"
-                @click="runDetect"
-              >
-                {{ detecting ? '检测中...' : '开始检测' }}
-              </el-button>
-            </span>
-          </el-tooltip>
+        <div class="service-detect-form-row">
+          <div class="cert-picker-inline">
+            <span class="inspect-config-label">证　　书：</span>
+            <el-input
+              :model-value="selectedCertDisplay"
+              readonly
+              placeholder="请选择证书"
+              class="cert-picker-input"
+              @click="openCertDialog"
+            >
+              <template #append>
+                <el-button @click="openCertDialog">...</el-button>
+              </template>
+            </el-input>
+          </div>
+          <div class="service-detect-form-row__action">
+            <el-tooltip :disabled="!startBlocked" content="请先选择证书" placement="top">
+              <span>
+                <el-button
+                  type="primary"
+                  :loading="detecting"
+                  :disabled="startDisabled"
+                  @click="runDetect"
+                >
+                  {{ detecting ? '检测中...' : '开始检测' }}
+                </el-button>
+              </span>
+            </el-tooltip>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
     <InspectResultsPanel
       ref="resultsRef"
@@ -288,7 +293,99 @@ function runDetect () {
 <style lang="scss" scoped>
 @import '@/styles/inspect-panel-config.scss';
 
+.service-detect-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.service-detect-card {
+  background: #fff;
+  border-radius: 0;
+}
+
+.service-detect-card__header {
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+  padding: 0 20px;
+  border-bottom: 1px solid $border-light;
+
+  h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: $text-primary;
+  }
+}
+
+.service-detect-card__body {
+  padding: 20px;
+}
+
 .service-detect-panel__alert {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  border: none;
+  border-radius: 0;
+  background: #fff2e8;
+  color: #ff8c1a;
+
+  :deep(.el-alert__content) {
+    color: #ff8c1a;
+    font-weight: 600;
+  }
+
+  :deep(.el-alert__icon) {
+    color: #ff8c1a;
+  }
+}
+
+.service-detect-form-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.service-detect-form-row__action {
+  margin-left: auto;
+  flex-shrink: 0;
+
+  :deep(.el-button) {
+    min-width: 82px;
+    height: 28px;
+    border-radius: 0;
+  }
+}
+
+.cert-picker-inline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.inspect-config-label {
+  color: $text-primary;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.cert-picker-input {
+  width: 274px;
+}
+
+@media (max-width: 768px) {
+  .service-detect-form-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .service-detect-form-row__action {
+    margin-left: 0;
+  }
+
+  .cert-picker-input {
+    width: min(274px, calc(100vw - 96px));
+  }
 }
 </style>

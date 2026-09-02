@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>业务检测 - 视觉优化方案</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: "Microsoft YaHei", "Arial", sans-serif;
+  font-size: 14px;
+  color: #333;
+  background: #f0f2f5;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== Header ===== */
+.header {
+  height: 50px;
+  background: #2d5af1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  flex-shrink: 0;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-logo {
+  width: 28px;
+  height: 28px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 6px;
+}
+.header-title {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+}
+.header-version {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #fff;
+  font-size: 13px;
+}
+.header-avatar {
+  width: 28px;
+  height: 28px;
+  background: #5b8af7;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #fff;
+}
+
+/* ===== Layout ===== */
+.layout-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+  width: 220px;
+  background: #f5f7fa;
+  border-right: 1px solid #e4e7ed;
+  overflow-y: auto;
+  flex-shrink: 0;
+  padding-top: 8px;
+}
+.menu-item {
+  height: 44px;
+  line-height: 44px;
+  padding: 0 20px;
+  color: #4a4a4a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+  position: relative;
+}
+.menu-item:hover {
+  background: rgba(45, 90, 241, 0.06);
+  color: #2d5af1;
+}
+.menu-item.active {
+  background: #e8eeff;
+  color: #2d5af1;
+  font-weight: 500;
+}
+.menu-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  background: #2d5af1;
+  border-radius: 0 2px 2px 0;
+}
+.menu-group-title {
+  height: 44px;
+  line-height: 44px;
+  padding: 0 20px;
+  color: #4a4a4a;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.menu-group-title:hover {
+  background: rgba(45, 90, 241, 0.06);
+  color: #2d5af1;
+}
+.menu-child {
+  padding-left: 50px;
+  height: 40px;
+  line-height: 40px;
+}
+.menu-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+}
+
+/* ===== Content ===== */
+.content-wrapper {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 8px;
+}
+.breadcrumb span { color: #999; }
+.breadcrumb .sep { margin: 0 6px; }
+
+/* Page title */
+.page-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+/* Page card */
+.page-card {
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  padding: 0 24px 24px;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #e8e8e8;
+  margin-bottom: 16px;
+}
+.tab-item {
+  padding: 12px 20px;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+.tab-item:hover { color: #2d5af1; }
+.tab-item.active {
+  color: #2d5af1;
+  font-weight: 500;
+}
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 20px;
+  right: 20px;
+  height: 2px;
+  background: #2d5af1;
+  border-radius: 1px;
+}
+
+/* ===== Alert ===== */
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.alert-warning {
+  background: #fff7e6;
+  border: 1px solid #ffe7ba;
+  color: #ad6800;
+}
+.alert-info {
+  background: #f0f7ff;
+  border: 1px solid #bae0ff;
+  color: #0958a5;
+}
+.alert-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: bold;
+}
+.alert-warning .alert-icon {
+  background: #fa8c16;
+  color: #fff;
+}
+.alert-info .alert-icon {
+  background: #1677ff;
+  color: #fff;
+}
+
+/* ===== Form row ===== */
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+}
+.form-label {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+  white-space: nowrap;
+  width: 48px;
+  text-align: right;
+}
+.form-input-group {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 360px;
+}
+.form-input {
+  flex: 1;
+  height: 32px;
+  border: 1px solid #dcdfe6;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: #999;
+  outline: none;
+  background: #fff;
+}
+.form-input:focus {
+  border-color: #2d5af1;
+}
+.form-input-append {
+  height: 32px;
+  width: 36px;
+  border: 1px solid #dcdfe6;
+  border-radius: 0 4px 4px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: #f5f7fa;
+  color: #666;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.form-input-append:hover {
+  color: #2d5af1;
+  border-color: #2d5af1;
+}
+.form-action {
+  margin-left: auto;
+}
+.btn-primary {
+  height: 32px;
+  padding: 0 20px;
+  background: #2d5af1;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+/* ===== Divider ===== */
+.section-divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 4px 0 16px;
+}
+
+/* ===== Section title ===== */
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+/* ===== Empty state ===== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 0;
+  color: #bbb;
+}
+.empty-icon {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 10px;
+  border-radius: 50%;
+  background: #f5f7fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.empty-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: #c0c4cc;
+}
+.empty-text {
+  font-size: 13px;
+  color: #999;
+}
+
+/* ===== Comparison labels ===== */
+.comparison-banner {
+  position: fixed;
+  top: 50px;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.comparison-tag {
+  background: #2d5af1;
+  color: #fff;
+  padding: 6px 16px;
+  border-radius: 0 0 6px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  pointer-events: auto;
+}
+</style>
+</head>
+<body>
+
+<div class="comparison-banner">
+  <div class="comparison-tag">优化方案 — 仅供视觉参考</div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo"></div>
+    <span class="header-title">签名验签服务器</span>
+    <span class="header-version">1.9.1</span>
+  </div>
+  <div class="header-right">
+    <span>全屏</span>
+    <div class="header-avatar">A</div>
+    <span>test</span>
+  </div>
+</div>
+
+<div class="layout-body">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="menu-item">
+      <span class="menu-icon">📊</span> 设备资源
+    </div>
+    <div class="menu-item">
+      <span class="menu-icon">📋</span> 应用管理
+    </div>
+    <div class="menu-group-title">
+      <span class="menu-icon">✏️</span> 签名验签服务
+    </div>
+    <div class="menu-item menu-child">密钥管理</div>
+    <div class="menu-item menu-child">证书管理</div>
+    <div class="menu-item menu-child">用户证书管理</div>
+    <div class="menu-item menu-child">CA根证管理</div>
+    <div class="menu-group-title">
+      <span class="menu-icon">🔗</span> 网络配置
+    </div>
+    <div class="menu-item menu-child">接口管理</div>
+    <div class="menu-item menu-child">路由配置</div>
+    <div class="menu-group-title">
+      <span class="menu-icon">⚙️</span> 系统管理
+    </div>
+    <div class="menu-item menu-child">管理员管理</div>
+    <div class="menu-item menu-child">权限管理</div>
+    <div class="menu-item menu-child">服务配置</div>
+    <div class="menu-item menu-child active">系统状态</div>
+    <div class="menu-item menu-child">系统设置</div>
+    <div class="menu-item menu-child">高级设置</div>
+    <div class="menu-item menu-child">高可用配置</div>
+  </div>
+
+  <!-- Content -->
+  <div class="content-wrapper">
+    <div class="breadcrumb">
+      <span>系统管理</span><span class="sep">/</span>
+      <span>系统状态</span><span class="sep">/</span>
+      <span style="color:#333;">业务检测</span>
+    </div>
+
+    <div class="page-title">业务检测</div>
+
+    <div class="page-card">
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab-item">系统信息</div>
+        <div class="tab-item active">业务检测</div>
+        <div class="tab-item">设备自检</div>
+      </div>
+
+      <!-- Alert -->
+      <div class="alert alert-warning">
+        <div class="alert-icon">!</div>
+        <span>检测前请上传 <strong>CA 根证</strong> 和 <strong>证书管理</strong> 里面的证书。</span>
+      </div>
+
+      <!-- Form row -->
+      <div class="form-row">
+        <span class="form-label">证书：</span>
+        <div class="form-input-group">
+          <input class="form-input" placeholder="请选择证书" readonly>
+          <div class="form-input-append">...</div>
+        </div>
+        <div class="form-action">
+          <button class="btn-primary">开始检测</button>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="section-divider"></div>
+
+      <!-- Results section -->
+      <div class="section-title">检测结果</div>
+
+      <!-- Empty state replaces info alert -->
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+        </div>
+        <div class="empty-text">请点击【开始检测】执行服务接口检测</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

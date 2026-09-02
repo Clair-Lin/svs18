@@ -9,7 +9,7 @@
         </div>
       </div>
       <span class="system-title">签名验签服务器</span>
-      <span class="system-version">1.9.0</span>
+      <span class="system-version">1.0</span>
     </div>
 
     <div class="header-right">

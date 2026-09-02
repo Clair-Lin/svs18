@@ -1,6 +1,6 @@
 <template>
   <div class="ha-manage">
-    <div class="page-card">
+    <div class="page-tabs-shell page-tabs-shell--content-card">
       <el-tabs v-model="activeTab" class="ha-manage-tabs">
         <el-tab-pane name="ha-config" lazy>
           <template #label>高可用配置</template>
@@ -10,10 +10,10 @@
           <template #label>热备管理</template>
           <HotStandbyManage />
         </el-tab-pane>
-        <el-tab-pane name="cluster" lazy>
+        d!-- <el-tab-pane name="cluster" lazy>
           <template #label>集群配置</template>
           <ClusterConfig />
-        </el-tab-pane>
+        </el-tab-pane> -->
       </el-tabs>
     </div>
   </div>

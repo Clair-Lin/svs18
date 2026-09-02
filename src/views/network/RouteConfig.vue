@@ -259,7 +259,7 @@ function handleBatchDelete () {
 
 watchEffect(() => {
   setPageBreadcrumbItems([
-    { label: '网络配置' },
+    { label: '网络管理' },
     { label: '路由配置' }
   ])
 })

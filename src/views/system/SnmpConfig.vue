@@ -1,8 +1,6 @@
 <template>
   <div class="snmp-config">
     <div class="page-card">
-      <div class="card-title">snmp配置</div>
-
       <div class="field-row">
         <span class="field-label">SNMP服务状态：</span>
         <el-switch v-model="snmpServiceOn" inline-prompt active-text="开" inactive-text="关" />

@@ -72,31 +72,31 @@ const routes = [
     path: '/key/manage/0019',
     redirect: { path: '/key/manage', query: { tab: '0019' } }
   },
-  // 签名验签服务 - 证书管理（顶栏面包屑由页面 Tab 动态设置）
+  // 签名验签管理 - 应用证书管理（顶栏面包屑由页面 Tab 动态设置）
   {
     path: '/cert/manage',
     name: 'CertManage',
     component: () => import('@/views/cert/CertManage.vue'),
-    meta: { title: '证书管理', dynamicBreadcrumb: true }
+    meta: { title: '应用证书管理', dynamicBreadcrumb: true }
   },
-  // 签名验签服务 - 用户证书管理
+  // 签名验签管理 - 用户证书管理
   {
     path: '/cert/user',
     name: 'UserCert',
     component: () => import('@/views/cert/UserCert.vue'),
     meta: {
       title: '用户证书管理',
-      breadcrumb: [{ label: '签名验签服务' }, { label: '用户证书管理' }]
+      breadcrumb: [{ label: '签名验签管理' }, { label: '用户证书管理' }]
     }
   },
-  // 签名验签服务 - CA根证管理
+  // 签名验签管理 - CA证书管理
   {
     path: '/cert/ca',
     name: 'CACert',
     component: () => import('@/views/cert/CACert.vue'),
     meta: {
-      title: 'CA根证管理',
-      breadcrumb: [{ label: '签名验签服务' }, { label: 'CA根证管理' }]
+      title: 'CA证书管理',
+      breadcrumb: [{ label: '签名验签管理' }, { label: 'CA证书管理' }]
     }
   },
   {
@@ -106,88 +106,104 @@ const routes = [
     meta: {
       title: 'CA-证书链',
       breadcrumb: [
-        { label: '签名验签服务' },
-        { label: 'CA根证管理', to: '/cert/ca' },
+        { label: '签名验签管理' },
+        { label: 'CA证书管理', to: '/cert/ca' },
         { label: 'CA-证书链' }
       ]
     }
   },
-  // 系统管理 - 白名单配置（应用访问 IP，单一界面）
+  // 系统管理 - 服务配置（服务管理 / 连接池配置）
   {
-    path: '/system/whitelist',
-    name: 'WhitelistConfig',
-    component: () => import('@/views/whitelist/WhitelistConfig.vue'),
+    path: '/system/service-config',
+    name: 'SystemServiceConfig',
+    component: () => import('@/views/system/SystemServiceConfig.vue'),
     meta: {
-      title: '白名单配置',
-      breadcrumb: [{ label: '系统管理' }, { label: '白名单配置' }]
-    }
-  },
-  {
-    path: '/whitelist/ip',
-    redirect: '/system/whitelist'
-  },
-  {
-    path: '/whitelist/service',
-    redirect: '/system/whitelist'
-  },
-  {
-    path: '/system/whitelist/ip',
-    redirect: '/system/whitelist'
-  },
-  {
-    path: '/system/whitelist/service',
-    redirect: '/system/whitelist'
-  },
-  // 系统管理
-  {
-    path: '/system/info',
-    name: 'SystemInfo',
-    component: () => import('@/views/system/SystemInfo.vue'),
-    meta: {
-      title: '系统信息',
-      breadcrumb: [{ label: '系统管理' }, { label: '系统信息' }]
-    }
-  },
-  // 网络配置 - 接口管理（网口/子网口/聚合/VLAN）
-  {
-    path: '/network/interface',
-    name: 'NetworkInterface',
-    component: () => import('@/views/system/NetworkConfig.vue'),
-    meta: {
-      title: '接口管理',
+      title: '服务配置',
       dynamicBreadcrumb: true
     }
   },
   {
-    path: '/network/route',
-    name: 'NetworkRoute',
-    component: () => import('@/views/network/RouteConfig.vue'),
-    meta: {
-      title: '路由配置',
-      breadcrumb: [{ label: '网络配置' }, { label: '路由配置' }]
-    }
-  },
-  {
-    path: '/system/network',
-    redirect: '/network/interface'
-  },
-  {
     path: '/system/service',
-    name: 'ServiceManage',
-    component: () => import('@/views/system/ServiceManage.vue'),
-    meta: {
-      title: '服务管理',
-      breadcrumb: [{ label: '系统管理' }, { label: '服务管理' }]
-    }
+    redirect: { path: '/system/service-config' }
   },
   {
     path: '/system/pool',
-    name: 'PoolConfig',
-    component: () => import('@/views/system/PoolConfig.vue'),
+    redirect: { path: '/system/service-config', query: { tab: 'pool' } }
+  },
+  // 系统管理 - 检测管理（设备自检 / 业务检测）
+  {
+    path: '/system/status',
+    name: 'SystemStatus',
+    component: () => import('@/views/system/SystemStatus.vue'),
     meta: {
-      title: '连接池配置',
-      breadcrumb: [{ label: '系统管理' }, { label: '连接池配置' }]
+      title: '检测管理',
+      dynamicBreadcrumb: true
     }
+  },
+  {
+    path: '/system/info',
+    redirect: { path: '/system/status' }
+  },
+  {
+    path: '/system/inspect',
+    redirect: { path: '/system/status', query: { tab: 'service' } }
+  },
+  {
+    path: '/system/detect',
+    redirect: { path: '/system/status', query: { tab: 'service' } }
+  },
+  {
+    path: '/system/inspect/device-detail',
+    name: 'DeviceInspectDetail',
+    component: () => import('@/views/system/inspect/DeviceInspectDetail.vue'),
+    meta: {
+      title: '设备自检详情',
+      dynamicBreadcrumb: true
+    }
+  },
+  // 系统管理 - 系统设置（时间设置 / Syslog配置 / SNMP配置）
+  {
+    path: '/system/settings',
+    name: 'SystemSettings',
+    component: () => import('@/views/system/SystemSettings.vue'),
+    meta: {
+      title: '系统设置',
+      dynamicBreadcrumb: true
+    }
+  },
+  {
+    path: '/system/ntp',
+    redirect: { path: '/system/settings' }
+  },
+  {
+    path: '/system/syslog',
+    redirect: { path: '/system/settings', query: { tab: 'syslog' } }
+  },
+  {
+    path: '/system/snmp',
+    redirect: { path: '/system/settings', query: { tab: 'snmp' } }
+  },
+  // 系统管理 - 高级设置（白名单配置 / 接口鉴权 / 证书校验）
+  {
+    path: '/system/advanced',
+    name: 'SystemAdvanced',
+    component: () => import('@/views/system/SystemAdvanced.vue'),
+    meta: {
+      title: '高级设置',
+      dynamicBreadcrumb: true
+    }
+  },
+  {
+    path: '/system/config',
+    redirect: { path: '/system/advanced' }
+  },
+  {
+    path: '/system/general/api-auth',
+    redirect: { path: '/system/advanced', query: { tab: 'api-auth' } }
+  },
+  {
+    path: '/system/general/cert-validation',
+    redirect: { path: '/system/advanced', query: { tab: 'cert-validation' } }
   },
   {
     path: '/system/admin',
@@ -207,48 +223,29 @@ const routes = [
       breadcrumb: [{ label: '系统管理' }, { label: '权限管理' }]
     }
   },
+  // 网络管理 - 网口管理（网口/子网口/聚合/VLAN）
   {
-    path: '/system/ntp',
-    name: 'NTPConfig',
-    component: () => import('@/views/system/NTPConfig.vue'),
+    path: '/network/interface',
+    name: 'NetworkInterface',
+    component: () => import('@/views/system/NetworkConfig.vue'),
     meta: {
-      title: 'NTP时间源管理',
-      breadcrumb: [{ label: '系统管理' }, { label: 'NTP时间源管理' }]
-    }
-  },
-  {
-    path: '/system/snmp',
-    name: 'SnmpConfig',
-    component: () => import('@/views/system/SnmpConfig.vue'),
-    meta: {
-      title: 'SNMP管理',
-      breadcrumb: [{ label: '系统管理' }, { label: 'snmp配置' }]
-    }
-  },
-  {
-    path: '/system/syslog',
-    name: 'SyslogConfig',
-    component: () => import('@/views/system/SyslogConfig.vue'),
-    meta: {
-      title: 'Syslog配置',
-      breadcrumb: [{ label: '系统管理' }, { label: 'Syslog配置' }]
-    }
-  },
-  // 系统管理 - 系统配置（接口鉴权 / 证书校验配置）
-  {
-    path: '/system/config',
-    name: 'SystemConfig',
-    component: () => import('@/views/system/SystemConfig.vue'),
-    meta: {
-      title: '系统配置',
+      title: '网口管理',
       dynamicBreadcrumb: true
     }
   },
   {
-    path: '/system/general/api-auth',
-    redirect: { path: '/system/config', query: { tab: 'api-auth' } }
+    path: '/network/route',
+    name: 'NetworkRoute',
+    component: () => import('@/views/network/RouteConfig.vue'),
+    meta: {
+      title: '路由配置',
+      breadcrumb: [{ label: '网络管理' }, { label: '路由配置' }]
+    }
   },
-  // 系统管理 - 高可用配置（高可用 / 热备 / 集群 Tab）
+  {
+    path: '/system/network',
+    redirect: '/network/interface'
+  },
   {
     path: '/system/ha',
     name: 'HaManage',
@@ -266,16 +263,6 @@ const routes = [
     path: '/system/cluster',
     redirect: { path: '/system/ha', query: { tab: 'cluster' } }
   },
-  // 系统管理 - 检测中心：业务检测 / 设备自检（含执行记录与自动检测设置）
-  {
-    path: '/system/inspect',
-    name: 'InspectCenter',
-    component: () => import('@/views/system/InspectCenter.vue'),
-    meta: {
-      title: '检测中心',
-      dynamicBreadcrumb: true
-    }
-  },
   {
     path: '/system/inspect/device-detail',
     name: 'DeviceInspectDetail',
@@ -287,7 +274,7 @@ const routes = [
   },
   {
     path: '/system/detect',
-    redirect: { path: '/system/inspect', query: { tab: 'service' } }
+    redirect: { path: '/system/status', query: { tab: 'service' } }
   }
 ]
 

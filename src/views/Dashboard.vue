@@ -7,12 +7,24 @@
       </p>
     </div> -->
 
-    <h3 class="section-heading">系统状态与资源</h3>
+    <h3 class="section-heading">系统状态</h3>
     <!-- 第一行：设备基本信息 | 网络状态 -->
     <div class="card-grid card-grid--device-row">
       <div class="page-card device-basic-card">
-        <div class="card-title">设备基本信息</div>
+        <div class="card-title">基本信息</div>
         <div class="device-basic-body">
+          <div class="basic-field">
+            <span class="field-label">产品名称</span>
+            <span class="field-value">{{ deviceBasic.productName }}</span>
+          </div>
+          <div class="basic-field">
+            <span class="field-label">产品型号</span>
+            <span class="field-value">{{ deviceBasic.productModel }}</span>
+          </div>
+          <div class="basic-field">
+            <span class="field-label">软件版本号</span>
+            <span class="field-value">{{ deviceBasic.softwareVersion }}</span>
+          </div>
           <div class="basic-field">
             <span class="field-label">健康状态</span>
             <span class="status-tag success">{{ deviceBasic.health }}</span>
@@ -29,7 +41,7 @@
       </div>
 
       <div class="page-card network-status-card">
-        <div class="card-title">网络状态</div>
+        <div class="card-title">网络信息</div>
         <div class="network-status-body">
           <div class="port-status-line">
             <span class="port-item">
@@ -520,6 +532,9 @@ let memoryInstance = null
 let diskInstance = null
 
 const deviceBasic = ref({
+  productName: '签名验签服务器',
+  productModel: 'OLYM-SVS',
+  softwareVersion: 'V1.9.1',
   health: '正常',
   cpuModel: 'Intel(R) Xeon(R) CPU E5-2650 v4 @ 2.20GHz',
   cpuCores: '物理CPU核数: 1 / 逻辑CPU核数: 4'
@@ -790,7 +805,7 @@ onUnmounted(() => {
 
 .biz-stat-split__line {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.3;
   text-align: left;
   min-width: 170px;
