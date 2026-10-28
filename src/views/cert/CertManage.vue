@@ -500,8 +500,14 @@
         <el-form-item label="证书名称">
           <el-input :model-value="exportCert?.appCertName || ''" disabled />
         </el-form-item>
-        <el-form-item label="导出类型" required>
-          <el-select v-model="exportCertType" placeholder="请选择导出类型" class="w-full">
+        <el-form-item v-if="exportCert?.encryptionCert" label="导出范围" required>
+          <el-select v-model="exportCertScope" placeholder="请选择导出范围" class="w-full">
+            <el-option label="签名证书" value="signing" />
+            <el-option label="双证书" value="dual" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="文件类型" required>
+          <el-select v-model="exportCertType" placeholder="请选择文件类型" class="w-full">
             <el-option label="证书" value="pem" />
             <el-option label="证书+私钥" value="p12" />
           </el-select>
@@ -635,6 +641,7 @@ const updateCertSubject = ref('')
 const exportCertVisible = ref(false)
 const exportCert = ref(null)
 const exportCertType = ref('')
+const exportCertScope = ref('signing')
 const importEncryptVisible = ref(false)
 const importEncryptMode = ref('create')
 const externalSignVisible = ref(false)
@@ -1204,43 +1211,107 @@ const confirmUpdateAuth = () => {
 const handleCertExport = (row) => {
   exportCert.value = row
   exportCertType.value = ''
+  exportCertScope.value = 'signing'
   exportCertVisible.value = true
+}
+
+const crc32 = (bytes) => {
+  let crc = 0xffffffff
+  for (const byte of bytes) {
+    crc ^= byte
+    for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0)
+  }
+  return (crc ^ 0xffffffff) >>> 0
+}
+
+const createZipBlob = (files) => {
+  const encoder = new TextEncoder()
+  const localRecords = []
+  const centralRecords = []
+  let localOffset = 0
+  let centralSize = 0
+
+  files.forEach(({ name, data }) => {
+    const fileName = encoder.encode(name)
+    const fileData = typeof data === 'string' ? encoder.encode(data) : data
+    const checksum = crc32(fileData)
+    const local = new Uint8Array(30 + fileName.length)
+    const localView = new DataView(local.buffer)
+    localView.setUint32(0, 0x04034b50, true)
+    localView.setUint16(4, 20, true)
+    localView.setUint32(14, checksum, true)
+    localView.setUint32(18, fileData.length, true)
+    localView.setUint32(22, fileData.length, true)
+    localView.setUint16(26, fileName.length, true)
+    local.set(fileName, 30)
+    localRecords.push(local, fileData)
+
+    const central = new Uint8Array(46 + fileName.length)
+    const centralView = new DataView(central.buffer)
+    centralView.setUint32(0, 0x02014b50, true)
+    centralView.setUint16(4, 20, true)
+    centralView.setUint16(6, 20, true)
+    centralView.setUint32(16, checksum, true)
+    centralView.setUint32(20, fileData.length, true)
+    centralView.setUint32(24, fileData.length, true)
+    centralView.setUint16(28, fileName.length, true)
+    centralView.setUint32(42, localOffset, true)
+    central.set(fileName, 46)
+    centralRecords.push(central)
+    localOffset += local.length + fileData.length
+    centralSize += central.length
+  })
+
+  const end = new Uint8Array(22)
+  const endView = new DataView(end.buffer)
+  endView.setUint32(0, 0x06054b50, true)
+  endView.setUint16(8, files.length, true)
+  endView.setUint16(10, files.length, true)
+  endView.setUint32(12, centralSize, true)
+  endView.setUint32(16, localOffset, true)
+  return new Blob([...localRecords, ...centralRecords, end], { type: 'application/zip' })
+}
+
+const getMockPem = (cert) => {
+  const pem = String(cert.certificatePem || '').replace(/\\n/g, '\n').trim()
+  return pem || '-----BEGIN CERTIFICATE-----\nU1ZTIERFTU8gQ0VSVElGSUNBVEU=\n-----END CERTIFICATE-----'
+}
+
+const getMockP12 = (cert) => {
+  const encoder = new TextEncoder()
+  const payload = [
+    'SVS MOCK PKCS#12',
+    `Certificate: ${cert.appCertName || 'certificate'}`,
+    getMockPem(cert),
+    '-----BEGIN PRIVATE KEY-----',
+    'U1ZTIFBSSVZBVEUgS0VZIERFTU8=',
+    '-----END PRIVATE KEY-----'
+  ].join('\n')
+  return encoder.encode(payload)
 }
 
 const confirmCertExport = () => {
   if (!exportCert.value || !exportCertType.value) {
-    ElMessage.warning('请选择导出类型')
+    ElMessage.warning('请选择文件类型')
     return
   }
 
   const row = exportCert.value
-  const certificates = [row, ...(row.encryptionCert ? [row.encryptionCert] : [])]
+  const certificates = exportCertScope.value === 'dual' && row.encryptionCert
+    ? [row, row.encryptionCert]
+    : [row]
   const baseName = String(row.appCertName || 'certificate').replace(/[^a-zA-Z0-9_.-]/g, '_')
-  let content
-  let fileName
-  let contentType
-
-  if (exportCertType.value === 'pem') {
-    content = certificates.map((cert) => String(cert.certificatePem || '').replace(/\\n/g, '\n')).filter(Boolean).join('\n')
-    fileName = `${baseName}${row.encryptionCert ? '-dual' : ''}.pem`
-    contentType = 'application/x-pem-file'
-  } else {
-    const p12MockPackage = {
-      format: 'SVS_P12_EXPORT_MOCK_V1',
-      certificateName: row.appCertName,
-      exportedAt: formatNow(),
-      certificates: certificates.map((cert) => ({
-        name: cert.appCertName,
-        certificatePem: cert.certificatePem || '',
-        privateKeyPem: '-----BEGIN PRIVATE KEY-----\\nU1ZTIFBSSVZBVEUgS0VZIERFTU8=\\n-----END PRIVATE KEY-----'
-      }))
-    }
-    content = JSON.stringify(p12MockPackage, null, 2)
-    fileName = `${baseName}${row.encryptionCert ? '-dual' : ''}.p12.json`
-    contentType = 'application/json'
-  }
-
-  const downloadUrl = URL.createObjectURL(new Blob([content], { type: contentType }))
+  const extension = exportCertType.value === 'pem' ? 'pem' : 'p12'
+  const files = certificates.map((cert, index) => ({
+    name: `${String(cert.appCertName || `${baseName}-${index + 1}`).replace(/[^a-zA-Z0-9_.-]/g, '_')}.${extension}`,
+    data: exportCertType.value === 'pem' ? getMockPem(cert) : getMockP12(cert)
+  }))
+  const isDual = certificates.length === 2
+  const blob = isDual
+    ? createZipBlob(files)
+    : new Blob([files[0].data], { type: exportCertType.value === 'pem' ? 'application/x-pem-file' : 'application/x-pkcs12' })
+  const fileName = isDual ? `${baseName}-dual.zip` : files[0].name
+  const downloadUrl = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = downloadUrl
   anchor.download = fileName
@@ -1249,9 +1320,8 @@ const confirmCertExport = () => {
   anchor.remove()
   window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 0)
   exportCertVisible.value = false
-  ElMessage.success(row.encryptionCert ? '双证导出文件已生成' : '证书导出文件已生成')
+  ElMessage.success(isDual ? '双证导出压缩包已生成' : '证书导出文件已生成')
 }
-
 const handleCertDelete = (row) => {
   ElMessageBox.confirm(
     row.encryptionCert
