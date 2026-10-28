@@ -285,16 +285,7 @@
             <el-button type="primary">点击上传</el-button>
           </el-upload>
         </el-form-item>
-        <el-form-item label="密钥访问口令" prop="keyAccessPwd">
-          <el-input
-            v-model="importEncryptForm.keyAccessPwd"
-            type="password"
-            show-password
-            autocomplete="new-password"
-            placeholder="请输入密钥访问口令"
-          />
-        </el-form-item>
-      </el-form>
+</el-form>
       <template #footer>
         <el-button @click="importEncryptVisible = false">取消</el-button>
         <el-button type="primary" @click="submitImportEncrypt">确定</el-button>
@@ -862,14 +853,12 @@ const importEncryptForm = reactive({
   certFileRaw: null,
   privateKeyFileName: '',
   privateKeyFileRaw: null,
-    keyAccessPwd: ''
 })
 
 const importEncryptRules = {
   signerId: [{ required: true, message: '请选择对应的签名证书', trigger: 'change' }],
   certFileName: [{ required: true, message: '请上传加密证书文件', trigger: 'change' }],
-  privateKeyFileName: [{ required: true, message: '请上传加密私钥', trigger: 'change' }],
-  keyAccessPwd: [{ required: true, message: '请输入密钥访问口令', trigger: 'blur' }]
+  privateKeyFileName: [{ required: true, message: '请上传加密私钥', trigger: 'change' }]
 }
 
 const { allCerts } = useCertManagePool()
@@ -1053,8 +1042,7 @@ const resetImportEncryptForm = (signerId = '') => {
     certFileName: '',
     certFileRaw: null,
     privateKeyFileName: '',
-    privateKeyFileRaw: null,
-    keyAccessPwd: ''
+    privateKeyFileRaw: null
   })
   importFormRef.value?.clearValidate()
 }
