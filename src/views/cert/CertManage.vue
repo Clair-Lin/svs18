@@ -40,13 +40,13 @@
                     <el-option label="已关联" value="yes" />
                     <el-option label="未关联" value="no" />
                   </el-select>
-                </el-form-item>
-                <el-form-item label="证书状态">
+                </el-form-item>                <el-form-item label="证书状态">
                   <el-select v-model="searchForm.status" placeholder="请选择证书状态" clearable>
                     <el-option label="生效中" value="生效中" />
-                    <el-option label="即将过期" value="即将过期" />
                     <el-option label="已过期" value="已过期" />
-                    <el-option label="异常" value="异常" />
+                    <el-option label="已吊销" value="已吊销" />
+                    <el-option label="未生效" value="未生效" />
+                    <el-option label="未知" value="未知" />
                   </el-select>
                 </el-form-item>
               </template>
@@ -289,11 +289,13 @@
         <el-form :inline="true" :model="signerPickerQuery" class="signer-picker-query">
           <el-form-item label="证书名称">
             <el-input v-model="signerPickerQuery.name" placeholder="请输入证书名称" clearable />
-          </el-form-item>
-          <el-form-item label="证书状态">
+          </el-form-item>          <el-form-item label="证书状态">
             <el-select v-model="signerPickerQuery.status" placeholder="请选择状态" clearable>
               <el-option label="生效中" value="生效中" />
-              <el-option label="即将过期" value="即将过期" />
+              <el-option label="已过期" value="已过期" />
+              <el-option label="已吊销" value="已吊销" />
+              <el-option label="未生效" value="未生效" />
+              <el-option label="未知" value="未知" />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -860,7 +862,7 @@ const eligibleSigners = computed(() =>
     return certType === '签名证书' &&
       String(row.algorithm || '').toLowerCase() === 'sm2' &&
       !row.encryptionCert &&
-      ['生效中', '即将过期'].includes(status) &&
+      status === '生效中' &&
       (!Number.isFinite(expiry) || expiry >= Date.now())
   })
 )
@@ -943,36 +945,21 @@ watch(filteredCertList, (list) => {
   if (certPage.value > pages) certPage.value = pages
 })
 
-const getCertDisplayStatus = (row) => {
-  if (!row.encryptionCert) return row.status || '—'
-  if (row.status === '异常' || row.encryptionCert.status === '异常') return '双证异常'
-  const signerExpired = row.status === '已过期'
-  const encryptionExpired = row.encryptionCert.status === '已过期'
-  if (signerExpired) return '签名证书已过期'
-  if (encryptionExpired) return '加密证书已过期'
-  return '双证完整'
-}
+const getCertDisplayStatus = (row) => row.status || '未知'
 
 const getStatusClass = (status) => {
   switch (status) {
-    case '有效':
     case '生效中':
       return 'success'
-    case '即将过期':
-    case '待关联':
+    case '未生效':
       return 'warning'
     case '已过期':
-    case '异常':
     case '已吊销':
-    case '双证异常':
-    case '签名证书已过期':
-    case '加密证书已过期':
       return 'danger'
     default:
       return ''
   }
 }
-
 const handleSearch = () => {
   certPage.value = 1
   ElMessage.success('已按条件筛选（原型演示）')

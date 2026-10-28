@@ -56,7 +56,7 @@ const INITIAL_CERT_MANAGE_ROWS = [
     certType: '签名证书',
     category: '签名证书',
     version: 'V3',
-    status: '即将过期',
+    status: '生效中',
     notBefore: '2024-01-10 08:00:00',
     notAfter: '2026-12-10 23:59:59',
   },
@@ -64,7 +64,7 @@ const INITIAL_CERT_MANAGE_ROWS = [
     id: 'cert-demo-unbound', appId: 'APP-2026-009', createdAt: '2026-10-21 11:25:00', appCertName: 'SM2_SIGN_UNBOUND',
     keyNumber: '1778491963875301', keyIndex: 689, algorithm: 'SM2', algorithmDisplay: 'SM3WithSM2',
     issuer: 'CN=Demo CA,O=Example,C=CN', subjectDn: '/C=CN/O=Example/CN=unbound-sign', subject: 'CN=unbound-sign, O=Example, C=CN',
-    serialNumber: 'SM2-S-0009', certType: '签名证书', category: '签名证书', version: 'V3', status: '待关联',
+    serialNumber: 'SM2-S-0009', certType: '签名证书', category: '签名证书', version: 'V3', status: '生效中',
     notBefore: '2026-01-01 00:00:00', notAfter: '2028-01-01 00:00:00',
     certificatePem: '-----BEGIN CERTIFICATE-----\\nU01fU0lHTl9VTkJPVU5E\n-----END CERTIFICATE-----'
   },  {
@@ -113,12 +113,27 @@ const INITIAL_CERT_MANAGE_ROWS = [
     id: 'cert-demo-dual-abnormal', appId: 'APP-2026-008', createdAt: '2026-10-15 16:00:00', appCertName: 'SM2_DUAL_ABNORMAL',
     keyNumber: '1778491963875301', keyIndex: 689, algorithm: 'SM2', algorithmDisplay: 'SM3WithSM2',
     issuer: 'CN=Demo CA,O=Example,C=CN', subjectDn: '/C=CN/O=Example/CN=dual-abnormal', subject: 'CN=dual-abnormal, O=Example, C=CN',
-    serialNumber: 'DUAL-S-0008', certType: '双证书', category: '双证书', version: 'V3', status: '异常',
+    serialNumber: 'DUAL-S-0008', certType: '双证书', category: '双证书', version: 'V3', status: '未知',
     notBefore: '2025-01-01 00:00:00', notAfter: '2028-01-01 00:00:00', validationError: 'CA 双证配组校验失败',
     certificatePem: '-----BEGIN CERTIFICATE-----\\nRFVBT CBTSUdOIEFCTk9STUF M Q==\\n-----END CERTIFICATE-----',
-    encryptionCert: { id: 'cert-demo-dual-abnormal-enc', appCertName: 'SM2_DUAL_ABNORMAL_ENCRYPT', keyIndex: 313, algorithm: 'SM2', algorithmDisplay: 'SM3WithSM2', issuer: 'CN=Demo CA,O=Example,C=CN', subjectDn: '/C=CN/O=Example/CN=dual-abnormal', subject: 'CN=dual-abnormal, O=Example, C=CN', serialNumber: 'DUAL-E-0008', status: '异常', notBefore: '2025-01-01 00:00:00', notAfter: '2028-01-01 00:00:00', certificatePem: '-----BEGIN CERTIFICATE-----\\nRFVBT CBFTkNSWVBUIEFCTk9STUF M Q==\\n-----END CERTIFICATE-----' }
+    encryptionCert: { id: 'cert-demo-dual-abnormal-enc', appCertName: 'SM2_DUAL_ABNORMAL_ENCRYPT', keyIndex: 313, algorithm: 'SM2', algorithmDisplay: 'SM3WithSM2', issuer: 'CN=Demo CA,O=Example,C=CN', subjectDn: '/C=CN/O=Example/CN=dual-abnormal', subject: 'CN=dual-abnormal, O=Example, C=CN', serialNumber: 'DUAL-E-0008', status: '未知', notBefore: '2025-01-01 00:00:00', notAfter: '2028-01-01 00:00:00', certificatePem: '-----BEGIN CERTIFICATE-----\\nRFVBT CBFTkNSWVBUIEFCTk9STUF M Q==\\n-----END CERTIFICATE-----' }
   },
-
+  {
+    id: 'cert-demo-revoked', appId: 'APP-2026-010', createdAt: '2026-10-14 15:40:00', appCertName: 'SM2_SIGN_REVOKED',
+    keyNumber: '1763124100123456', keyIndex: 101, algorithm: 'SM2', algorithmDisplay: 'SM3WithSM2',
+    issuer: 'CN=Demo CA,O=Example,C=CN', subjectDn: '/C=CN/O=Example/CN=revoked-sign', subject: 'CN=revoked-sign, O=Example, C=CN',
+    serialNumber: 'SM2-S-0010', certType: '签名证书', category: '签名证书', version: 'V3', status: '已吊销',
+    notBefore: '2025-01-01 00:00:00', notAfter: '2028-01-01 00:00:00',
+    certificatePem: '-----BEGIN CERTIFICATE-----\\nU01fU0lHTl9SRVZPS0VE\n-----END CERTIFICATE-----'
+  },
+  {
+    id: 'cert-demo-not-yet-valid', appId: 'APP-2026-011', createdAt: '2026-10-13 14:10:00', appCertName: 'SM2_SIGN_NOT_YET_VALID',
+    keyNumber: '1778491963875301', keyIndex: 689, algorithm: 'SM2', algorithmDisplay: 'SM3WithSM2',
+    issuer: 'CN=Demo CA,O=Example,C=CN', subjectDn: '/C=CN/O=Example/CN=future-sign', subject: 'CN=future-sign, O=Example, C=CN',
+    serialNumber: 'SM2-S-0011', certType: '签名证书', category: '签名证书', version: 'V3', status: '未生效',
+    notBefore: '2027-01-01 00:00:00', notAfter: '2030-01-01 00:00:00',
+    certificatePem: '-----BEGIN CERTIFICATE-----\\nU01fU0lHTl9OT1RfWUFSVl9WQUxJRA==\n-----END CERTIFICATE-----'
+  },
 ]
 const allCerts = ref(INITIAL_CERT_MANAGE_ROWS.map((row) => ({ ...row })))
 
