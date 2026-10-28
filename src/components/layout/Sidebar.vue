@@ -26,7 +26,9 @@
         <el-menu-item index="/key/manage">
           <template #title>密钥管理<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></template>
         </el-menu-item>
-        <el-menu-item index="/cert/manage">应用证书管理</el-menu-item>
+        <el-menu-item index="/cert/manage">
+          <template #title>应用证书管理<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></template>
+        </el-menu-item>
         <el-menu-item index="/cert/user">用户证书管理</el-menu-item>
         <el-menu-item index="/cert/ca">CA证书管理</el-menu-item>
       </el-sub-menu>
