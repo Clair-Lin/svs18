@@ -246,7 +246,7 @@
         :rules="importEncryptRules"
         label-width="140px"
       >
-        <el-form-item label="对应签名证书" prop="signerId">
+        <el-form-item label="签名证书" prop="signerId">
           <el-button type="primary" plain @click="openSignerPicker">选择签名证书</el-button>
           <span v-if="selectedSigner" class="selected-signer-name">{{ selectedSigner.appCertName }}</span>
           <span v-else class="text-secondary">未选择</span>
@@ -255,7 +255,7 @@
           <span>主题：{{ selectedSigner.subjectDn || '—' }}</span>
           <span>密钥索引：{{ selectedSigner.keyIndex || '—' }}</span>
         </div>
-        <el-form-item label="加密证书文件" prop="certFileName">
+        <el-form-item label="加密证书" prop="certFileName">
           <el-upload
             class="encrypt-cert-upload"
             action="#"
@@ -268,7 +268,7 @@
             <el-button type="primary">点击上传</el-button>
           </el-upload>
         </el-form-item>
-        <el-form-item label="加密私钥文件" prop="privateKeyFileName">
+        <el-form-item label="加密私钥" prop="privateKeyFileName">
           <el-upload
             class="encrypt-cert-upload"
             action="#"
@@ -281,8 +281,14 @@
             <el-button type="primary">点击上传</el-button>
           </el-upload>
         </el-form-item>
-        <el-form-item label="导入说明">
-          <el-input v-model="importEncryptForm.note" type="textarea" :rows="2" maxlength="256" show-word-limit />
+        <el-form-item label="密钥访问口令" prop="keyAccessPwd">
+          <el-input
+            v-model="importEncryptForm.keyAccessPwd"
+            type="password"
+            show-password
+            autocomplete="new-password"
+            placeholder="请输入密钥访问口令"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -851,13 +857,14 @@ const importEncryptForm = reactive({
   certFileRaw: null,
   privateKeyFileName: '',
   privateKeyFileRaw: null,
-  note: ''
+    keyAccessPwd: ''
 })
 
 const importEncryptRules = {
   signerId: [{ required: true, message: '请选择对应的签名证书', trigger: 'change' }],
   certFileName: [{ required: true, message: '请上传加密证书文件', trigger: 'change' }],
-  privateKeyFileName: [{ required: true, message: '请上传加密私钥文件', trigger: 'change' }]
+  privateKeyFileName: [{ required: true, message: '请上传加密私钥', trigger: 'change' }],
+  keyAccessPwd: [{ required: true, message: '请输入密钥访问口令', trigger: 'blur' }]
 }
 
 const { allCerts } = useCertManagePool()
@@ -1039,7 +1046,7 @@ const openImportEncryptDialog = () => {
     certFileRaw: null,
     privateKeyFileName: '',
     privateKeyFileRaw: null,
-    note: ''
+    keyAccessPwd: ''
   })
   importFormRef.value?.clearValidate()
   importEncryptVisible.value = true
@@ -1100,7 +1107,6 @@ const submitImportEncrypt = () => {
       status: '生效中',
       notBefore: '—',
       notAfter: '—',
-      importNote: importEncryptForm.note
     }
     signer.encryptionKeyIndex = keyIndex
     signer.certType = '双证书'
