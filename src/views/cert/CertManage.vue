@@ -502,59 +502,37 @@
         <el-button type="primary" @click="confirmCertExport">确定</el-button>
       </template>
     </el-dialog>
-    <el-dialog v-model="detailDialogVisible" title="证书详情" width="820px">
-      <div v-if="currentCert" class="cert-detail-content">
-        <el-divider content-position="left">基本信息</el-divider>
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="应用编号">{{ currentCert.appId || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="应用名称">{{ currentCert.appName || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="证书类型">{{ currentCert.certType || currentCert.category || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="数据来源">{{ currentCert.dataSource || '本地创建' }}</el-descriptions-item>
-          <el-descriptions-item label="双证关系" :span="2">
-            <el-tag :type="currentCert.encryptionCert ? 'success' : 'info'" effect="plain">
-              {{ currentCert.encryptionCert ? '双证完整' : '签名证书，待关联加密证书' }}
-            </el-tag>
-          </el-descriptions-item>
-        </el-descriptions>
-        <el-divider content-position="left">签名证书</el-divider>
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="证书名称">{{ currentCert.appCertName || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="算法类型">{{ currentCert.algorithmDisplay || currentCert.algorithm || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="颁发者" :span="2">{{ currentCert.issuer || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="证书主题(DN)" :span="2">{{ currentCert.subjectDn || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="证书序列号">{{ currentCert.serialNumber || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="版本号">{{ currentCert.version || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="生效时间">{{ currentCert.notBefore || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="到期时间">{{ currentCert.notAfter || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="证书状态"><span class="status-tag" :class="getStatusClass(currentCert.status)">{{ currentCert.status || '—' }}</span></el-descriptions-item>
-        </el-descriptions>
-        <template v-if="currentCert.encryptionCert">
-          <el-divider content-position="left">加密证书</el-divider>
-          <el-descriptions :column="2" border>
-            <el-descriptions-item label="证书名称">{{ currentCert.encryptionCert.appCertName || '—' }}</el-descriptions-item>
-            <el-descriptions-item label="算法类型">{{ currentCert.encryptionCert.algorithmDisplay || currentCert.encryptionCert.algorithm || '—' }}</el-descriptions-item>
-            <el-descriptions-item label="颁发者" :span="2">{{ currentCert.encryptionCert.issuer || '—' }}</el-descriptions-item>
-            <el-descriptions-item label="证书主题(DN)" :span="2">{{ currentCert.encryptionCert.subjectDn || '—' }}</el-descriptions-item>
-            <el-descriptions-item label="证书序列号">{{ currentCert.encryptionCert.serialNumber || '—' }}</el-descriptions-item>
-            <el-descriptions-item label="生效时间">{{ currentCert.encryptionCert.notBefore || '—' }}</el-descriptions-item>
-            <el-descriptions-item label="到期时间">{{ currentCert.encryptionCert.notAfter || '—' }}</el-descriptions-item>
-            <el-descriptions-item label="证书状态"><span class="status-tag" :class="getStatusClass(currentCert.encryptionCert.status)">{{ currentCert.encryptionCert.status || '—' }}</span></el-descriptions-item>
-          </el-descriptions>
-        </template>
-        <el-divider content-position="left">密钥关联</el-divider>
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="签名密钥索引">{{ currentCert.keyIndex || currentCert.keyNumber || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="加密密钥索引">{{ currentCert.encryptionCert?.keyIndex || '未关联' }}</el-descriptions-item>
-          <el-descriptions-item label="签名公钥匹配">{{ currentCert.encryptionCert ? '通过' : '待校验' }}</el-descriptions-item>
-          <el-descriptions-item label="加密公钥匹配">{{ currentCert.encryptionCert ? '通过' : '待关联' }}</el-descriptions-item>
-        </el-descriptions>
-        <el-divider content-position="left">校验结果</el-divider>
-        <div class="cert-detail-checks">
-          <el-tag type="success" effect="plain">证书链：通过</el-tag>
-          <el-tag :type="currentCert.encryptionCert ? 'success' : 'info'" effect="plain">CA 双证配组：{{ currentCert.encryptionCert ? '通过' : '待关联' }}</el-tag>
-          <el-tag :type="currentCert.encryptionCert ? 'success' : 'info'" effect="plain">有效期重叠：{{ currentCert.encryptionCert ? '通过' : '待校验' }}</el-tag>
-        </div>
-      </div>
+    <el-dialog v-model="updateCertVisible" title="更新应用证书" width="680px" destroy-on-close>
+      <el-form label-width="112px" class="update-cert-form">
+        <el-form-item label="证书名称">
+          <span>{{ updateCert?.appCertName || '—' }}</span>
+        </el-form-item>
+        <el-form-item label="算法类型">
+          <span>{{ updateCert?.algorithmDisplay || updateCert?.algorithm || '—' }}</span>
+        </el-form-item>
+        <el-form-item label="证书主题">
+          <el-input
+            v-model="updateCertSubject"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入证书主题"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="updateCertVisible = false">取消</el-button>
+        <el-popover v-model:visible="updateConfirmVisible" placement="top-end" :width="430" trigger="click">
+          <p class="update-cert-warning">
+            应用证书更新后，原应用证书将被删除，无法再使用原应用证书进行数字签名。确定要更新吗？
+          </p>
+          <div class="update-cert-warning-actions">
+            <el-button type="primary" @click="confirmCertUpdate">确认更新</el-button>
+          </div>
+          <template #reference>
+            <el-button type="primary">确定</el-button>
+          </template>
+        </el-popover>
+      </template>
     </el-dialog>
   </div>
 </template>
@@ -610,11 +588,13 @@ watchEffect(() => {
 
 const certPage = ref(1)
 const certPageSize = ref(10)
-const detailDialogVisible = ref(false)
+const updateCertVisible = ref(false)
+const updateConfirmVisible = ref(false)
+const updateCert = ref(null)
+const updateCertSubject = ref('')
 const exportCertVisible = ref(false)
 const exportCert = ref(null)
 const exportCertType = ref('')
-const currentCert = ref(null)
 const importEncryptVisible = ref(false)
 const externalSignVisible = ref(false)
 const externalSignFormRef = ref(null)
@@ -1112,8 +1092,19 @@ const submitImportEncrypt = () => {
 }
 
 const handleCertUpdate = (row) => {
-  currentCert.value = row
-  detailDialogVisible.value = true
+  updateCert.value = row
+  updateCertSubject.value = row.subjectDn || ''
+  updateConfirmVisible.value = false
+  updateCertVisible.value = true
+}
+
+const confirmCertUpdate = () => {
+  if (!updateCert.value) return
+  updateCert.value.subjectDn = updateCertSubject.value.trim()
+  updateCert.value.subject = updateCertSubject.value.trim()
+  updateConfirmVisible.value = false
+  updateCertVisible.value = false
+  ElMessage.success('应用证书已更新（原型演示）')
 }
 
 const handleCertExport = (row) => {
@@ -1760,5 +1751,20 @@ const removeApplyRow = (row) => {
 
   .export-cert-form :deep(.el-select) {
     width: 100%;
+  }
+  .update-cert-form :deep(.el-form-item) {
+    margin-bottom: 24px;
+  }
+
+  .update-cert-warning {
+    margin: 0;
+    line-height: 1.6;
+    color: var(--el-text-color-regular);
+  }
+
+  .update-cert-warning-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
   }
 </style>
