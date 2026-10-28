@@ -214,7 +214,7 @@
       </el-tabs>
     </div>
 
-    <el-dialog v-model="externalSignVisible" title="导入证书" width="620px" destroy-on-close>
+    <el-dialog class="cert-manage-dialog" v-model="externalSignVisible" title="导入证书" width="620px" destroy-on-close>
       <el-form ref="externalSignFormRef" :model="externalSignForm" :rules="externalSignRules" label-width="136px">
         <el-form-item label="证书名称" prop="certName">
           <el-input v-model="externalSignForm.certName" placeholder="请输入证书名称，2-60个字符" maxlength="60" clearable />
@@ -238,7 +238,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="importEncryptVisible" title="导入加密证书" width="600px" destroy-on-close>
+    <el-dialog class="cert-manage-dialog" v-model="importEncryptVisible" title="导入加密证书" width="600px" destroy-on-close>
       <el-form
         ref="importFormRef"
         class="import-encrypt-form"
@@ -291,7 +291,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="signerPickerVisible" title="选择签名证书" width="980px" destroy-on-close>
+    <el-dialog class="cert-manage-dialog" v-model="signerPickerVisible" title="选择签名证书" width="980px" destroy-on-close>
       <div class="signer-picker">
         <el-form :inline="true" :model="signerPickerQuery" class="signer-picker-query">
           <el-form-item label="证书名称">
@@ -362,7 +362,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog
+    <el-dialog class="cert-manage-dialog"
       v-model="applyCertVisible"
       title="申请应用证书"
       width="680px"
@@ -469,7 +469,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="importApplyCertVisible" title="导入证书" width="520px" destroy-on-close>
+    <el-dialog class="cert-manage-dialog" v-model="importApplyCertVisible" title="导入证书" width="520px" destroy-on-close>
       <el-form ref="importApplyFormRef" :model="importApplyForm" :rules="importApplyRules" label-width="120px">
         <el-form-item label="申请记录">
           <span class="text-secondary">{{ importApplyTarget?.subjectDn || '—' }}</span>
@@ -494,7 +494,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="exportCertVisible" title="导出应用证书" width="620px" destroy-on-close>
+    <el-dialog class="cert-manage-dialog" v-model="exportCertVisible" title="导出应用证书" width="620px" destroy-on-close>
       <el-form label-width="104px" class="export-cert-form">
         <el-form-item label="证书名称">
           <el-input :model-value="exportCert?.appCertName || ''" disabled />
@@ -511,7 +511,7 @@
         <el-button type="primary" @click="confirmCertExport">确定</el-button>
       </template>
     </el-dialog>
-    <el-dialog v-model="updateCertVisible" title="更新应用证书" width="680px" destroy-on-close>
+    <el-dialog class="cert-manage-dialog" v-model="updateCertVisible" title="更新应用证书" width="680px" destroy-on-close>
       <el-form label-width="112px" class="update-cert-form">
         <el-form-item label="证书名称">
           <span>{{ updateCert?.appCertName || '—' }}</span>
@@ -530,7 +530,7 @@
       </el-form>
       <template #footer>
         <el-button @click="updateCertVisible = false">取消</el-button>
-        <el-popover v-model:visible="updateConfirmVisible" placement="top-end" :width="430" trigger="click">
+        <el-popover v-model:visible="updateConfirmVisible" placement="top-end" :width="430" trigger="click" popper-class="cert-manage-popover">
           <p class="update-cert-warning">
             应用证书更新后，原应用证书将被删除，无法再使用原应用证书进行数字签名。确定要更新吗？
           </p>
@@ -543,7 +543,7 @@
         </el-popover>
       </template>
     </el-dialog>
-    <el-dialog
+    <el-dialog class="cert-manage-dialog"
       v-model="updateAuthVisible"
       title="二次认证"
       width="600px"
@@ -1757,6 +1757,56 @@ const removeApplyRow = (row) => {
     color: #3478f6 !important;
   }
 
+  :deep(.el-button) {
+    --el-button-border-radius: 0;
+    --el-button-text-color: #387ee8;
+    --el-button-border-color: #387ee8;
+    --el-button-hover-text-color: #387ee8;
+    --el-button-hover-border-color: #387ee8;
+    border-radius: 0 !important;
+  }
+
+  :deep(.el-button--primary) {
+    --el-button-text-color: #fff;
+    --el-button-bg-color: #387ee8;
+    --el-button-border-color: #387ee8;
+    --el-button-hover-text-color: #fff;
+    --el-button-hover-bg-color: #5592ef;
+    --el-button-hover-border-color: #5592ef;
+    --el-button-active-bg-color: #2769cf;
+    --el-button-active-border-color: #2769cf;
+  }
+
+  :global(.cert-manage-dialog) {
+    --el-color-primary: #387ee8;
+    --el-border-radius-base: 0;
+  }
+
+  :global(.cert-manage-dialog .el-button) {
+    --el-button-border-radius: 0;
+    --el-button-text-color: #387ee8;
+    --el-button-border-color: #387ee8;
+    --el-button-hover-text-color: #387ee8;
+    --el-button-hover-border-color: #387ee8;
+    border-radius: 0 !important;
+  }
+
+  :global(.cert-manage-dialog .el-button--primary) {
+    --el-button-text-color: #fff;
+    --el-button-bg-color: #387ee8;
+    --el-button-border-color: #387ee8;
+    --el-button-hover-text-color: #fff;
+    --el-button-hover-bg-color: #5592ef;
+    --el-button-hover-border-color: #5592ef;
+  }
+
+  :global(.cert-manage-popover .el-button) {
+    --el-button-border-radius: 0;
+    --el-button-text-color: #fff;
+    --el-button-bg-color: #387ee8;
+    --el-button-border-color: #387ee8;
+    border-radius: 0 !important;
+  }
   .cert-search-form {
     row-gap: 6px;
   }
