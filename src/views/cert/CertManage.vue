@@ -3,7 +3,10 @@
     <h1 class="cert-page-title">{{ pageTab === 'apply' ? '证书申请管理' : '证书管理' }}</h1>
     <div class="page-tabs-shell">
       <el-tabs v-model="pageTab" class="cert-page-tabs">
-        <el-tab-pane label="证书管理" name="cert" lazy>
+        <el-tab-pane name="cert" lazy>
+          <template #label>
+            <span class="cert-tab-label">证书管理<el-tag class="cert-tab-new" type="danger" effect="dark" size="small">新</el-tag></span>
+          </template>
           <div class="search-area">
                         <el-form :inline="true" :model="searchForm" class="search-form cert-search-form">
               <el-form-item label="密钥编号">
@@ -144,7 +147,10 @@
           </div>
         </el-tab-pane>
 
-                <el-tab-pane label="证书申请管理" name="apply" lazy>
+        <el-tab-pane name="apply" lazy>
+          <template #label>
+            <span class="cert-tab-label">证书申请管理<el-tag class="cert-tab-new" type="danger" effect="dark" size="small">新</el-tag></span>
+          </template>
           <div class="search-area apply-search-area">
             <el-form :inline="true" :model="applySearchForm" class="search-form cert-search-form">
               <el-form-item label="应用名称">
@@ -1390,7 +1396,7 @@ const removeApplyRow = (row) => {
   align-items: flex-start;
 
   :deep(.el-form-item) {
-    margin-right: 12px;
+    margin-right: 8px;
   }
 
   :deep(.el-input),
@@ -1403,12 +1409,6 @@ const removeApplyRow = (row) => {
     margin-top: 4px;
   }
 
-  .cert-search-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 8px;
-  }
   .search-actions :deep(.el-button + .el-button) {
     margin-left: 10px;
   }
@@ -1729,18 +1729,43 @@ const removeApplyRow = (row) => {
   }
 
   .cert-page-tabs :deep(.el-tabs__header) {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
 
   .cert-page-tabs :deep(.el-tabs__item) {
+    display: inline-flex;
+    align-items: center;
     height: 44px;
     padding: 0 22px !important;
     font-size: 16px !important;
     color: #4b5563;
   }
 
+  .cert-tab-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .cert-tab-new {
+    height: 18px;
+    padding: 0 5px;
+    line-height: 16px;
+  }
+
   .cert-page-tabs :deep(.el-tabs__item.is-active) {
     color: #3478f6 !important;
+  }
+
+  .cert-search-form {
+    row-gap: 6px;
+  }
+
+  .cert-search-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
   }
 
   .search-area, .action-bar, .cert-page-tabs :deep(.el-table) {
@@ -1750,9 +1775,9 @@ const removeApplyRow = (row) => {
   }
 
   .search-area {
-    padding: 24px 28px 18px;
+    padding: 16px 24px 12px;
     border-radius: 2px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
 
   .action-bar {
