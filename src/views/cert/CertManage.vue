@@ -151,10 +151,7 @@
           </div>
         </el-tab-pane>
 
-        <el-tab-pane name="apply" lazy>
-          <template #label>
-            <span class="cert-tab-label">证书申请管理<el-tag class="cert-tab-new" type="danger" effect="dark" size="small">新</el-tag></span>
-          </template>
+        <el-tab-pane label="证书申请管理" name="apply" lazy>
           <div class="search-area apply-search-area">
             <el-form :inline="true" :model="applySearchForm" class="search-form cert-search-form">
               <el-form-item label="应用名称">
