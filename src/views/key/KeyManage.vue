@@ -1,17 +1,18 @@
 <template>
   <div class="key-manage">
     <KeyManageSecurityModals ref="securityModalsRef" />
-    <div class="page-tabs-shell page-tabs-shell--content-card">
+    <h1 class="key-page-title">{{ tabCopy[activeTab].breadcrumb }}</h1>
+    <div class="page-tabs-shell">
       <el-tabs v-model="activeTab" class="key-manage-page-tabs">
         <el-tab-pane name="0029" lazy>
           <template #label>
-            <span class="key-tab-label">签名验签密钥</span>
+            <span class="key-tab-label">签名验签服务器密钥</span>
           </template>
           <KeyManage0029Panel />
         </el-tab-pane>
         <el-tab-pane name="0019" lazy>
           <template #label>
-            <span class="key-tab-label">通用密码容器</span>
+            <span class="key-tab-label">通用密码服务密钥</span>
           </template>
           <KeyManage0019Panel />
         </el-tab-pane>
@@ -37,8 +38,8 @@ provide(KEY_MANAGE_SECURITY_KEY, securityModalsRef)
 
 /** 面包屑文案（Tab 标题在 template #label 中维护） */
 const tabCopy = {
-  '0029': { breadcrumb: '签名验签服务器技术规范' },
-  '0019': { breadcrumb: '通用密码服务接口规范' }
+  '0029': { breadcrumb: '签名验签服务器密钥' },
+  '0019': { breadcrumb: '通用密码服务密钥' }
 }
 
 function tabFromRoute () {
@@ -104,6 +105,22 @@ watchEffect(() => {
   :deep(.el-tabs__content) {
     padding-top: 16px;
   }
+}
+
+.key-page-title {
+  margin: 8px 0 26px;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.key-manage-page-tabs :deep(.el-tabs__header) {
+  margin-bottom: 20px !important;
+}
+
+.key-manage-page-tabs :deep(.el-tabs__item) {
+  height: 48px;
+  font-size: 16px !important;
 }
 
 .key-tab-label {

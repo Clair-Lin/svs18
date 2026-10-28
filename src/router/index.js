@@ -276,6 +276,26 @@ const routes = [
     path: '/system/detect',
     redirect: { path: '/system/status', query: { tab: 'service' } }
   }
+,  {
+    path: '/audit',
+    name: 'AuditSystem',
+    component: () => import('@/views/audit/AuditSystem.vue'),
+    meta: {
+      title: '审计系统',
+      breadcrumb: [{ label: '审计系统' }]
+    }  },
+  {
+    path: '/audit/compute-log',
+    name: 'AuditComputeLog',
+    component: () => import('@/views/audit/AuditComputeLog.vue'),
+    meta: { title: '运算日志', breadcrumb: [{ label: '日志管理' }, { label: '运算日志' }] }
+  },
+  {
+    path: '/audit/admin-log',
+    name: 'AuditAdminLog',
+    component: () => import('@/views/audit/AuditAdminLog.vue'),
+    meta: { title: '管理员操作日志', breadcrumb: [{ label: '日志管理' }, { label: '管理员操作日志' }] }
+  }
 ]
 
 const router = createRouter({

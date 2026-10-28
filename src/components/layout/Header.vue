@@ -9,7 +9,7 @@
         </div>
       </div>
       <span class="system-title">签名验签服务器</span>
-      <span class="system-version">1.0</span>
+      <span class="system-version">{{ isAudit ? '1.9.0' : '1.0' }}</span>
     </div>
 
     <div class="header-right">
@@ -22,7 +22,7 @@
           <el-avatar :size="28" class="user-avatar">
             <el-icon><User /></el-icon>
           </el-avatar>
-          <span class="username">sys_admin</span>
+          <span class="username">{{ isAudit ? 'audit_admin' : 'sys_admin' }}</span>
           <el-icon class="arrow-icon"><ArrowDown /></el-icon>
         </div>
         <template #dropdown>
@@ -34,6 +34,14 @@
             <el-dropdown-item>
               <el-icon><Lock /></el-icon>
               修改密码
+            </el-dropdown-item>
+            <el-dropdown-item @click="goToAuditAdmin">
+              <el-icon><Monitor /></el-icon>
+              审计管理员
+            </el-dropdown-item>
+            <el-dropdown-item @click="goToSystemAdmin">
+              <el-icon><Tools /></el-icon>
+              系统管理员
             </el-dropdown-item>
             <el-dropdown-item divided>
               <el-icon><SwitchButton /></el-icon>
@@ -47,7 +55,16 @@
 </template>
 
 <script setup>
-import { FullScreen, User, ArrowDown, Lock, SwitchButton } from '@element-plus/icons-vue'
+import { FullScreen, User, ArrowDown, Lock, SwitchButton, Monitor, Tools } from '@element-plus/icons-vue'
+import { useRouter, useRoute } from 'vue-router'
+import { computed } from 'vue'
+
+const router = useRouter()
+const route = useRoute()
+const isAudit = computed(() => route.path.startsWith('/audit'))
+
+const goToAuditAdmin = () => router.push('/audit')
+const goToSystemAdmin = () => router.push('/system/admin')
 
 const toggleFullscreen = () => {
   if (!document.fullscreenElement) {

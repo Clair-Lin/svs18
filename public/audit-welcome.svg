@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 360" fill="none">
+<g stroke="#cfd5e6" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+<path fill="#f3f5fa" d="M90 286h470v23H90z"/><path fill="#f3f5fa" d="M176 309h17l-3 53h-12zM465 309h17l-3 53h-12z"/>
+<path fill="#f3f5fa" d="M150 286V94h260v192z"/><path fill="white" d="M167 112h226v158H167z"/>
+<circle fill="white" cx="280" cy="174" r="39"/><path fill="#e4e8f3" d="M268 151l25 5v28l-25 10-25-10v-28z"/><path fill="white" d="M268 151v43l25-10v-28z"/>
+<path fill="#f3f5fa" d="M434 96l30-45h65v14h-55l-20 42z"/><circle fill="#f3f5fa" cx="524" cy="84" r="36"/>
+<path fill="#f3f5fa" d="M73 286l36-150 15 5-30 145zM58 286h75v10H58z"/>
+<path fill="#f3f5fa" d="M111 257h40v29h-40z"/><circle fill="#dfe4f1" cx="131" cy="263" r="11"/>
+<path fill="#f3f5fa" d="M450 279l92-48 7 14-92 48z"/><path fill="#f3f5fa" d="M531 223c5-17 11-30 18-28 5 1 2 18 2 30 5-22 12-40 19-37 6 3-2 23-4 39 8-20 16-33 22-29 6 5-7 26-12 39 12-15 21-24 27-18 5 6-10 28-20 39h-45z"/>
+<path fill="white" d="M520 233h77v45c0 18-12 28-35 28h-9c-21 0-33-10-33-28z"/><path d="M597 245c25-6 28 26 5 27"/>
+</g></svg>

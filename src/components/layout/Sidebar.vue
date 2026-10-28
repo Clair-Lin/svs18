@@ -24,7 +24,7 @@
           <span>签名验签管理</span>
         </template>
         <el-menu-item index="/key/manage">
-          <template #title>密钥管理<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></template>
+          <template #title>密钥管理</template>
         </el-menu-item>
         <el-menu-item index="/cert/manage">
           <template #title>应用证书管理<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></template>
@@ -55,7 +55,7 @@
         <el-menu-item index="/system/status">检测管理</el-menu-item>
         <el-menu-item index="/system/settings">系统设置</el-menu-item>
         <el-menu-item index="/system/advanced">高级设置</el-menu-item>
-        <!-- <el-menu-item index="/system/ha">高可用配置<el-tag type="danger" effect="dark" size="small" class="menu-tag">新</el-tag></el-menu-item> -->
+        <!-- <el-menu-item index="/system/ha">高可用配置</el-menu-item> -->
       </el-sub-menu>
     </el-menu>
 
