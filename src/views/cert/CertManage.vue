@@ -124,12 +124,16 @@
             <el-table-column label="创建时间" prop="createdAt" width="168" align="center" />
             <el-table-column prop="notBefore" label="生效时间" width="168" align="center" />
             <el-table-column prop="notAfter" label="到期时间" width="168" align="center" />
-            <el-table-column label="操作" fixed="right" width="190">
+            <el-table-column label="操作" fixed="right" width="220">
               <template #default="{ row }">
                 <template v-if="!row.isPairChild">
                   <el-button type="primary" size="small" link @click="handleCertUpdate(row)">更新</el-button>
                   <el-button type="primary" size="small" link @click="handleCertExport(row)">导出</el-button>
                   <el-button type="primary" size="small" link @click="handleCertDelete(row)">删除</el-button>
+                </template>
+                <template v-else>
+                  <el-button type="primary" size="small" link @click="openUpdateEncryptDialog(row)">更新</el-button>
+                  <el-button type="primary" size="small" link @click="handleEncryptCertDelete(row)">删除</el-button>
                 </template>
               </template>
             </el-table-column>
@@ -238,7 +242,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog class="cert-manage-dialog" v-model="importEncryptVisible" title="导入加密证书" width="600px" destroy-on-close>
+    <el-dialog class="cert-manage-dialog" v-model="importEncryptVisible" :title="importEncryptMode === 'update' ? '更新加密证书' : '导入加密证书'" width="600px" destroy-on-close>
       <el-form
         ref="importFormRef"
         class="import-encrypt-form"
@@ -247,7 +251,7 @@
         label-width="140px"
       >
         <el-form-item label="签名证书" prop="signerId">
-          <el-button type="primary" plain @click="openSignerPicker">选择签名证书</el-button>
+          <el-button v-if="importEncryptMode === 'create'" type="primary" plain @click="openSignerPicker">选择签名证书</el-button>
           <span v-if="selectedSigner" class="selected-signer-name">{{ selectedSigner.appCertName }}</span>
           <span v-else class="text-secondary">未选择</span>
         </el-form-item>
@@ -538,7 +542,7 @@
         <el-button @click="updateCertVisible = false">取消</el-button>
         <el-popover v-model:visible="updateConfirmVisible" placement="top-end" :width="430" trigger="click" popper-class="cert-manage-popover">
           <p class="update-cert-warning">
-            应用证书更新后，原应用证书将被删除，无法再使用原应用证书进行数字签名。确定要更新吗？
+            本次仅更新签名证书，不会更新关联的加密证书。如需更新加密证书，请单独更新加密证书并重新导入。应用证书更新后，原签名证书将被删除，无法再使用原证书进行数字签名。确定要更新吗？
           </p>
           <div class="update-cert-warning-actions">
             <el-button type="primary" @click="openUpdateAuth">确认更新</el-button>
@@ -638,6 +642,7 @@ const exportCertVisible = ref(false)
 const exportCert = ref(null)
 const exportCertType = ref('')
 const importEncryptVisible = ref(false)
+const importEncryptMode = ref('create')
 const externalSignVisible = ref(false)
 const externalSignFormRef = ref(null)
 const importFormRef = ref(null)
@@ -881,9 +886,11 @@ const eligibleSigners = computed(() =>
   })
 )
 
-const selectedSigner = computed(() =>
-  eligibleSigners.value.find((row) => row.id === importEncryptForm.signerId) || null
-)
+const selectedSigner = computed(() => {
+  const signer = allCerts.value.find((row) => row.id === importEncryptForm.signerId)
+  if (importEncryptMode.value === 'update') return signer?.encryptionCert ? signer : null
+  return eligibleSigners.value.find((row) => row.id === importEncryptForm.signerId) || null
+})
 
 const getSignerOptionLabel = (row) =>
   `${row.appCertName} · ${row.serialNumber || '无序列号'} · 索引 ${row.keyIndex || '—'}`
@@ -941,6 +948,7 @@ const visibleCertRows = computed(() => pagedCertList.value.flatMap((row) => {
     {
       ...encryptionCert,
       id: encryptionCert.id || `${row.id}-encryption`,
+      parentSignerId: row.id,
       appId: row.appId,
       appName: row.appName,
       dataSource: row.dataSource,
@@ -1039,9 +1047,9 @@ const submitImportExternalSign = () => {
   })
 }
 
-const openImportEncryptDialog = () => {
+const resetImportEncryptForm = (signerId = '') => {
   Object.assign(importEncryptForm, {
-    signerId: '',
+    signerId,
     certFileName: '',
     certFileRaw: null,
     privateKeyFileName: '',
@@ -1049,9 +1057,24 @@ const openImportEncryptDialog = () => {
     keyAccessPwd: ''
   })
   importFormRef.value?.clearValidate()
+}
+
+const openImportEncryptDialog = () => {
+  importEncryptMode.value = 'create'
+  resetImportEncryptForm()
   importEncryptVisible.value = true
 }
 
+const openUpdateEncryptDialog = (row) => {
+  const signer = allCerts.value.find((item) => item.id === row.parentSignerId && item.encryptionCert)
+  if (!signer) {
+    ElMessage.warning('未找到对应签名证书或加密证书已删除')
+    return
+  }
+  importEncryptMode.value = 'update'
+  resetImportEncryptForm(signer.id)
+  importEncryptVisible.value = true
+}
 const onEncryptCertFileChange = (file) => {
   importEncryptForm.certFileName = file?.name || ''
   importEncryptForm.certFileRaw = file?.raw || null
@@ -1086,27 +1109,45 @@ const getEncryptionImportFailure = () => {
 
 const submitImportEncrypt = () => {
   importFormRef.value?.validate((valid) => {
-    if (!valid || !selectedSigner.value) return
+    if (!valid) return
+    const signer = allCerts.value.find((row) => row.id === importEncryptForm.signerId)
+    if (!signer) {
+      ElMessage.warning('请选择有效的签名证书')
+      return
+    }
+
+    const hasEncryption = Boolean(signer.encryptionCert)
+    if (importEncryptMode.value === 'create' && hasEncryption) {
+      ElMessage.warning('该签名证书已关联加密证书，不允许重复导入')
+      return
+    }
+    if (importEncryptMode.value === 'update' && !hasEncryption) {
+      ElMessage.warning('该签名证书尚未关联加密证书，请使用导入操作')
+      return
+    }
+
     const failureMessage = getEncryptionImportFailure()
     if (failureMessage) {
       ElMessage.error(failureMessage)
       return
     }
-    const signer = selectedSigner.value
-    const keyIndex = Math.max(301, ...allCerts.value.map((row) => Number(row.encryptionCert?.keyIndex || 0))) + 1
+
+    const previousCert = signer.encryptionCert
+    const keyIndex = previousCert?.keyIndex || Math.max(301, ...allCerts.value.map((row) => Number(row.encryptionCert?.keyIndex || 0))) + 1
     signer.encryptionCert = {
-      id: `cert-encrypt-${Date.now()}`,
+      ...previousCert,
+      id: previousCert?.id || `cert-encrypt-${Date.now()}`,
       appCertName: importEncryptForm.certFileName.replace(/\.[^.]+$/, '') || '加密证书',
       keyIndex,
-      createdAt: formatNow(),
+      createdAt: previousCert?.createdAt || formatNow(),
       algorithm: signer.algorithm,
-      issuer: '—',
+      issuer: previousCert?.issuer || '—',
       subjectDn: signer.subjectDn,
       subject: signer.subjectDn,
-      serialNumber: '—',
-      status: '生效中',
-      notBefore: '—',
-      notAfter: '—',
+      serialNumber: previousCert?.serialNumber || '—',
+      status: previousCert?.status || '生效中',
+      notBefore: previousCert?.notBefore || '—',
+      notAfter: previousCert?.notAfter || '—'
     }
     signer.encryptionKeyIndex = keyIndex
     signer.certType = '双证书'
@@ -1114,10 +1155,30 @@ const submitImportEncrypt = () => {
     expandedCertIds.value = new Set([...expandedCertIds.value, signer.id])
     certPage.value = 1
     importEncryptVisible.value = false
-    ElMessage.success('加密证书已关联（原型演示）')
+    const wasUpdate = importEncryptMode.value === 'update'
+    importEncryptMode.value = 'create'
+    ElMessage.success(wasUpdate ? '加密证书已更新（原型演示）' : '加密证书已关联（原型演示）')
   })
 }
 
+const handleEncryptCertDelete = (row) => {
+  ElMessageBox.confirm(
+    '删除加密证书后，该证书将被移除；签名证书会保留。确定要删除吗？',
+    '删除加密证书',
+    { type: 'warning', confirmButtonText: '确定删除', cancelButtonText: '取消' }
+  ).then(() => {
+    const signer = allCerts.value.find((item) => item.id === row.parentSignerId)
+    if (!signer?.encryptionCert) return
+    delete signer.encryptionCert
+    delete signer.encryptionKeyIndex
+    signer.certType = '签名证书'
+    signer.category = '签名证书'
+    const next = new Set(expandedCertIds.value)
+    next.delete(signer.id)
+    expandedCertIds.value = next
+    ElMessage.success('加密证书已删除（原型演示）')
+  }).catch(() => {})
+}
 const handleCertUpdate = (row) => {
   updateCert.value = row
   updateCertSubject.value = row.subjectDn || ''
@@ -1201,19 +1262,18 @@ const confirmCertExport = () => {
 }
 
 const handleCertDelete = (row) => {
-  ElMessageBox.confirm('确定删除该证书吗？', '提示', {
-    type: 'warning',
-    confirmButtonText: '确定',
-    cancelButtonText: '取消'
-  })
-    .then(() => {
-      const id = row.id
-      allCerts.value = allCerts.value.filter((r) => r.id !== id)
-      ElMessage.success('已删除')
-    })
-    .catch(() => {})
+  ElMessageBox.confirm(
+    row.encryptionCert
+      ? '删除签名证书后，其关联的加密证书也会一同删除。确定继续吗？'
+      : '确定删除该签名证书吗？',
+    '提示',
+    { type: 'warning', confirmButtonText: '确定', cancelButtonText: '取消' }
+  ).then(() => {
+    allCerts.value = allCerts.value.filter((item) => item.id !== row.id)
+    expandedCertIds.value = new Set([...expandedCertIds.value].filter((id) => id !== row.id))
+    ElMessage.success('签名证书已删除（原型演示）')
+  }).catch(() => {})
 }
-
 const resetApplyCertForm = () => {
   Object.assign(applyCertForm, {
     certName: '',
