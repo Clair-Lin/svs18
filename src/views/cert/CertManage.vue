@@ -5,7 +5,7 @@
       <el-tabs v-model="pageTab" class="cert-page-tabs">
         <el-tab-pane label="证书管理" name="cert" lazy>
           <div class="search-area">
-            <el-form :inline="true" :model="searchForm" class="search-form cert-search-form">
+                        <el-form :inline="true" :model="searchForm" class="search-form cert-search-form">
               <el-form-item label="密钥编号">
                 <el-input v-model="searchForm.keyNumber" placeholder="请输入密钥编号" clearable />
               </el-form-item>
@@ -21,13 +21,6 @@
                   <el-option label="导入" value="导入" />
                 </el-select>
               </el-form-item>
-              <el-form-item class="search-actions">
-                <el-button type="primary" @click="handleSearch">查询</el-button>
-                <el-button @click="handleReset">重置</el-button>
-                <el-button link type="primary" @click="searchExpanded = !searchExpanded">
-                  {{ searchExpanded ? '收起' : '展开' }}<el-icon><ArrowDown /></el-icon>
-                </el-button>
-              </el-form-item>
               <template v-if="searchExpanded">
                 <el-form-item label="证书类型">
                   <el-select v-model="searchForm.certType" placeholder="请选择证书类型" clearable>
@@ -40,7 +33,8 @@
                     <el-option label="已关联" value="yes" />
                     <el-option label="未关联" value="no" />
                   </el-select>
-                </el-form-item>                <el-form-item label="证书状态">
+                </el-form-item>
+                <el-form-item label="证书状态">
                   <el-select v-model="searchForm.status" placeholder="请选择证书状态" clearable>
                     <el-option label="生效中" value="生效中" />
                     <el-option label="已过期" value="已过期" />
@@ -51,6 +45,13 @@
                 </el-form-item>
               </template>
             </el-form>
+            <div class="cert-search-actions">
+              <el-button type="primary" @click="handleSearch">查询</el-button>
+              <el-button @click="handleReset">重置</el-button>
+              <el-button link type="primary" @click="searchExpanded = !searchExpanded">
+                {{ searchExpanded ? '收起' : '展开' }}<el-icon><ArrowDown /></el-icon>
+              </el-button>
+            </div>
           </div>
 
           <div class="action-bar">
@@ -1402,6 +1403,12 @@ const removeApplyRow = (row) => {
     margin-top: 4px;
   }
 
+  .cert-search-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+  }
   .search-actions :deep(.el-button + .el-button) {
     margin-left: 10px;
   }
