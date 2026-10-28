@@ -1772,6 +1772,17 @@ const removeApplyRow = (row) => {
     border-radius: 0 !important;
   }
 
+  :deep(.el-button.is-link.el-button--primary) {
+    --el-button-text-color: #387ee8;
+    --el-button-bg-color: transparent;
+    --el-button-border-color: transparent;
+    --el-button-hover-text-color: #2769cf;
+    --el-button-hover-bg-color: transparent;
+    --el-button-hover-border-color: transparent;
+    --el-button-active-text-color: #2769cf;
+    --el-button-active-bg-color: transparent;
+    --el-button-active-border-color: transparent;
+  }
   :deep(.el-button--primary) {
     --el-button-text-color: #fff;
     --el-button-bg-color: #387ee8;
@@ -1797,6 +1808,14 @@ const removeApplyRow = (row) => {
     border-radius: 0 !important;
   }
 
+  :global(.cert-manage-dialog .el-button.is-link.el-button--primary) {
+    --el-button-text-color: #387ee8;
+    --el-button-bg-color: transparent;
+    --el-button-border-color: transparent;
+    --el-button-hover-text-color: #2769cf;
+    --el-button-hover-bg-color: transparent;
+    --el-button-hover-border-color: transparent;
+  }
   :global(.cert-manage-dialog .el-button--primary) {
     --el-button-text-color: #fff;
     --el-button-bg-color: #387ee8;
