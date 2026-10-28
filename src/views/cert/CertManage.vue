@@ -526,12 +526,36 @@
             应用证书更新后，原应用证书将被删除，无法再使用原应用证书进行数字签名。确定要更新吗？
           </p>
           <div class="update-cert-warning-actions">
-            <el-button type="primary" @click="confirmCertUpdate">确认更新</el-button>
+            <el-button type="primary" @click="openUpdateAuth">确认更新</el-button>
           </div>
           <template #reference>
             <el-button type="primary">确定</el-button>
           </template>
         </el-popover>
+      </template>
+    </el-dialog>
+    <el-dialog
+      v-model="updateAuthVisible"
+      title="二次认证"
+      width="600px"
+      align-center
+      :close-on-click-modal="false"
+    >
+      <div class="update-auth-body">
+        <div class="update-auth-label">管理员密码</div>
+        <el-input
+          v-model="updateAdminPassword"
+          type="password"
+          show-password
+          clearable
+          autocomplete="off"
+          placeholder="输入管理员密码进行认证"
+          @keyup.enter="confirmUpdateAuth"
+        />
+      </div>
+      <template #footer>
+        <el-button @click="updateAuthVisible = false">取消</el-button>
+        <el-button type="primary" :loading="updateAuthSubmitting" @click="confirmUpdateAuth">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -590,6 +614,9 @@ const certPage = ref(1)
 const certPageSize = ref(10)
 const updateCertVisible = ref(false)
 const updateConfirmVisible = ref(false)
+const updateAuthVisible = ref(false)
+const updateAuthSubmitting = ref(false)
+const updateAdminPassword = ref('')
 const updateCert = ref(null)
 const updateCertSubject = ref('')
 const exportCertVisible = ref(false)
@@ -1098,13 +1125,28 @@ const handleCertUpdate = (row) => {
   updateCertVisible.value = true
 }
 
-const confirmCertUpdate = () => {
+const openUpdateAuth = () => {
+  updateAdminPassword.value = ''
+  updateAuthVisible.value = true
+}
+
+const confirmUpdateAuth = () => {
+  if (!updateAdminPassword.value.trim()) {
+    ElMessage.warning('请输入管理员密码进行认证')
+    return
+  }
   if (!updateCert.value) return
-  updateCert.value.subjectDn = updateCertSubject.value.trim()
-  updateCert.value.subject = updateCertSubject.value.trim()
-  updateConfirmVisible.value = false
-  updateCertVisible.value = false
-  ElMessage.success('应用证书已更新（原型演示）')
+  updateAuthSubmitting.value = true
+  setTimeout(() => {
+    updateCert.value.subjectDn = updateCertSubject.value.trim()
+    updateCert.value.subject = updateCertSubject.value.trim()
+    updateAuthSubmitting.value = false
+    updateAuthVisible.value = false
+    updateConfirmVisible.value = false
+    updateCertVisible.value = false
+    updateAdminPassword.value = ''
+    ElMessage.success('应用证书已更新（原型演示）')
+  }, 500)
 }
 
 const handleCertExport = (row) => {
@@ -1766,5 +1808,13 @@ const removeApplyRow = (row) => {
     display: flex;
     justify-content: flex-end;
     margin-top: 14px;
+  }
+  .update-auth-body {
+    padding: 4px 0 20px;
+  }
+
+  .update-auth-label {
+    margin-bottom: 18px;
+    color: var(--el-text-color-regular);
   }
 </style>
