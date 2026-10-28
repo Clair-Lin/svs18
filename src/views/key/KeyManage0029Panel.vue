@@ -15,7 +15,7 @@
           <span class="filter-label">密码算法</span>
           <el-select
             v-model="filterAlgorithm"
-            placeholder="全部"
+            placeholder="请选择密码算法"
             class="filter-select"
             popper-class="key-algorithm-filter-popper"
           >
@@ -38,10 +38,23 @@
         </div>
         <div class="filter-item">
           <span class="filter-label">密钥用途</span>
-          <el-select v-model="filterUsage" placeholder="全部" class="filter-select">
+          <el-select v-model="filterUsage" placeholder="请选择密钥用途" class="filter-select">
             <el-option label="全部" value="" />
             <el-option label="签名验签" value="签名验签" />
             <el-option label="加密解密" value="加密解密" />
+          </el-select>
+        </div>
+        <div class="filter-item">
+          <span class="filter-label">应用名称</span>
+          <el-select v-model="filterApplication" placeholder="请选择应用" clearable filterable class="filter-select">
+            <el-option v-for="name in applicationOptions" :key="name" :label="name" :value="name" />
+          </el-select>
+        </div>
+        <div class="filter-item">
+          <span class="filter-label">数据来源</span>
+          <el-select v-model="filterDataSource" placeholder="请选择数据来源" clearable class="filter-select">
+            <el-option label="本地创建" value="本地创建" />
+            <el-option label="恢复导入" value="恢复导入" />
           </el-select>
         </div>
         <div class="filter-item filter-item--range">
@@ -49,7 +62,7 @@
           <el-date-picker
             v-model="filterDateRange"
             type="datetimerange"
-            range-separator="-"
+            range-separator="至"
             start-placeholder="开始时间"
             end-placeholder="结束时间"
             value-format="x"
@@ -64,25 +77,47 @@
     </div>
 
     <div class="action-bar">
-      <el-button type="primary" @click="handleCreate">生成密钥  <el-tag type="danger" effect="dark" size="small" style="margin-left: 6px;">新</el-tag></el-button>
+      <el-button type="primary" @click="handleCreate">生成密钥 <el-tag type="danger" effect="dark" size="small" style="margin-left: 6px;">新</el-tag></el-button>
       <el-button @click="handleRecover">恢复密钥</el-button>
+      <el-button @click="handleBackupAll">备份所有密钥</el-button>
+      <el-button @click="handleRecoverAll">恢复所有密钥</el-button>
     </div>
 
-    <el-table :data="pagedKeyList" border stripe>
-      <el-table-column prop="index" label="密钥索引" width="100" align="center" />
-      <el-table-column prop="keyId" label="密钥ID" min-width="160" show-overflow-tooltip />
-      <el-table-column prop="keyAlgorithm" label="密钥算法" width="150" />
-      <el-table-column prop="keyUsage" label="密钥用途" min-width="140" show-overflow-tooltip />
-      <el-table-column prop="keyLength" label="密钥长度" width="120" align="center" show-overflow-tooltip />
-      <el-table-column prop="addedTime" label="添加时间" width="180" />
-      <el-table-column label="操作" fixed="right" width="320">
+    <el-table :data="pagedKeyList" class="key-table">
+      <el-table-column prop="index" label="密钥索引" width="96" />
+      <el-table-column prop="keyId" label="密钥ID" min-width="178" show-overflow-tooltip />
+      <el-table-column label="密码算法及用途" min-width="230">
         <template #default="{ row }">
-          <el-button type="primary" size="small" link @click="handleDetail(row)">详情</el-button>
-          <el-button type="primary" size="small" link @click="handleBackup(row)">备份</el-button>
-          <el-button type="primary" size="small" link @click="handleDestroy(row)">销毁</el-button>
-          <el-button type="primary" size="small" link @click="handleViewPassword(row)">
-            查看密钥访问口令
-          </el-button>
+          <div class="algorithm-cell">
+            <span>{{ formatAlgorithm(row) }}</span>
+            <small>{{ row.keyUsage }}</small>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="数据来源" min-width="110">
+        <template #default="{ row }">{{ row.dataSource || '本地创建' }}</template>
+      </el-table-column>
+      <el-table-column label="应用名称" min-width="125">
+        <template #default="{ row }">{{ row.application || '--' }}</template>
+      </el-table-column>
+      <el-table-column label="副本状态" width="105">
+        <template #header>
+          <span>副本状态</span>
+          <el-tooltip content="可用副本数 / 总副本数" placement="top">
+            <el-icon class="column-help"><QuestionFilled /></el-icon>
+          </el-tooltip>
+        </template>
+        <template #default="{ row }"><span class="copy-ready">{{ row.availableCopies ?? 1 }}</span> / {{ row.totalCopies ?? 1 }}</template>
+      </el-table-column>
+      <el-table-column prop="addedTime" label="添加时间" width="180" />
+      <el-table-column label="操作" fixed="right" width="220">
+        <template #default="{ row }">
+          <div class="row-actions">
+            <el-button type="primary" size="small" link @click="handleDetail(row)">详情</el-button>
+            <el-button type="primary" size="small" link @click="handleBackup(row)">备份</el-button>
+            <el-button type="primary" size="small" link @click="handleDestroy(row)">销毁</el-button>
+            <el-button type="primary" size="small" link @click="handleViewPassword(row)">查看密钥访问口令</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -92,7 +127,7 @@
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         background
-        layout="total, sizes, prev, pager, next"
+        layout="total, prev, pager, next, sizes"
         :total="filteredKeyList.length"
         :page-sizes="[10, 20, 50]"
       />
@@ -307,6 +342,14 @@
           <span class="detail-p2-label">密钥用途</span>
           <span class="detail-p2-value">{{ currentKey.keyUsage }}</span>
         </div>
+        <div class="detail-p2-row">
+          <span class="detail-p2-label">数据来源</span>
+          <span class="detail-p2-value">{{ currentKey.dataSource || '本地创建' }}</span>
+        </div>
+        <div class="detail-p2-row">
+          <span class="detail-p2-label">应用名称</span>
+          <span class="detail-p2-value">{{ currentKey.application || '--' }}</span>
+        </div>
         <div v-if="!isPqcKeyRow(currentKey)" class="detail-p2-row">
           <span class="detail-p2-label">密钥长度</span>
           <span class="detail-p2-value">{{ currentKey.keyLength }}</span>
@@ -340,6 +383,7 @@
 import { ref, reactive, computed, inject, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { QuestionFilled } from '@element-plus/icons-vue'
+import { PQC_KEY_OPTIONS } from '@/constants/pqc.js'
 import { KEY_MANAGE_SECURITY_KEY } from './keyManageSecurityKey.js'
 
 /** 密钥类型（下拉分组选项值） */
@@ -352,22 +396,6 @@ const KEY_TYPE = {
   SM9_MASTER: 'SM9主密钥',
   // SM9_SHARD: 'SM9分片主密钥'
 }
-
-/** PQC 体系密钥：类型即算法变体，生成时无单独长度选择 */
-const PQC_KEY_OPTIONS = [
-  { label: 'ML_DSA_44', value: 'ML_DSA_44' },
-  { label: 'ML_DSA_65', value: 'ML_DSA_65' },
-  { label: 'ML_DSA_87', value: 'ML_DSA_87' },
-  { label: 'SLH_DSA_SHA2_128s', value: 'SLH_DSA_SHA2_128s' },
-  { label: 'SLH_DSA_SHA2_128f', value: 'SLH_DSA_SHA2_128f' },
-  { label: 'SLH_DSA_SHA2_192s', value: 'SLH_DSA_SHA2_192s' },
-  { label: 'SLH_DSA_SHA2_192f', value: 'SLH_DSA_SHA2_192f' },
-  { label: 'SLH_DSA_SHA2_256s', value: 'SLH_DSA_SHA2_256s' },
-  { label: 'SLH_DSA_SHA2_256f', value: 'SLH_DSA_SHA2_256f' },
-  { label: 'AIGIS_SIG1', value: 'AIGIS_SIG1' },
-  { label: 'AIGIS_SIG2', value: 'AIGIS_SIG2' },
-  { label: 'AIGIS_SIG3', value: 'AIGIS_SIG3' }
-]
 
 const PQC_KEY_TYPES = PQC_KEY_OPTIONS.map((o) => o.value)
 
@@ -441,6 +469,8 @@ function formatMasterKeyRef (row) {
 const filterKeyId = ref('')
 const filterAlgorithm = ref('')
 const filterUsage = ref('')
+const filterApplication = ref('')
+const filterDataSource = ref('')
 const filterDateRange = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -612,6 +642,7 @@ function buildIbcKeyRow (now, addedTime) {
     keyType: keyForm.keyType,
     keyUsage: SM9_KEY_USAGE,
     keyLength: SM9_SYSTEM_KEY_LENGTH,
+    dataSource: '本地创建',
     addedTime,
     addedTimeMs: now
   }
@@ -640,6 +671,7 @@ function buildPkiKeyRow (now, addedTime) {
     keyType: keyForm.keyType,
     keyUsage: usageLabel,
     keyLength: String(keyForm.keySize),
+    dataSource: '本地创建',
     addedTime,
     addedTimeMs: now
   }
@@ -653,12 +685,43 @@ function buildPqcKeyRow (now, addedTime) {
     keyType: keyForm.keyType,
     keyUsage: PQC_KEY_USAGE,
     keyLength: '—',
+    dataSource: '本地创建',
     addedTime,
     addedTimeMs: now
   }
 }
 
 const keyList = ref([
+  {
+    index: 692, keyId: '1792689986659501', keyAlgorithm: 'SLH_DSA_SHA2_192f',
+    keyType: 'SLH_DSA_SHA2_192f', keyUsage: '签名验签', keyLength: '—',
+    dataSource: '本地创建', availableCopies: 1, totalCopies: 1,
+    addedTime: '2026-10-23 01:26:26', addedTimeMs: new Date('2026-10-23T01:26:26').getTime()
+  },
+  {
+    index: 691, keyId: '1792689828103301', keyAlgorithm: '3DES',
+    keyType: KEY_TYPE.TDES, keyUsage: '加密解密', keyLength: '192',
+    dataSource: '本地创建', availableCopies: 1, totalCopies: 1,
+    addedTime: '2026-10-23 01:23:48', addedTimeMs: new Date('2026-10-23T01:23:48').getTime()
+  },
+  {
+    index: 690, keyId: '1792653729974901', keyAlgorithm: 'RSA',
+    keyType: KEY_TYPE.RSA, keyUsage: '签名验签', keyLength: '2048',
+    dataSource: '本地创建', availableCopies: 1, totalCopies: 1,
+    addedTime: '2026-10-22 15:22:09', addedTimeMs: new Date('2026-10-22T15:22:09').getTime()
+  },
+  {
+    index: 689, keyId: '1792653699053701', keyAlgorithm: 'SM2',
+    keyType: KEY_TYPE.SM2, keyUsage: '签名验签', keyLength: '256',
+    dataSource: '本地创建', availableCopies: 1, totalCopies: 1,
+    addedTime: '2026-10-22 15:21:39', addedTimeMs: new Date('2026-10-22T15:21:39').getTime()
+  },
+  {
+    index: 688, keyId: '1792652334370301', keyAlgorithm: 'DSA_Falcon_PADDED_512',
+    keyType: 'DSA_Falcon_PADDED_512', keyUsage: '签名验签', keyLength: '—',
+    dataSource: '本地创建', availableCopies: 1, totalCopies: 1,
+    addedTime: '2026-10-22 14:58:54', addedTimeMs: new Date('2026-10-22T14:58:54').getTime()
+  },
   {
     index: 106,
     keyId: '1763200300666004',
@@ -716,6 +779,15 @@ const keyList = ref([
   }
 ])
 
+const applicationOptions = computed(() =>
+  [...new Set(['test', ...keyList.value.map((row) => row.application).filter(Boolean)])]
+)
+
+function formatAlgorithm (row) {
+  if (row.keyLength && row.keyLength !== '—') return `${row.keyAlgorithm}_${row.keyLength}`
+  return row.keyAlgorithm.startsWith('SLH_DSA') ? `PQC--${row.keyAlgorithm}` : row.keyAlgorithm
+}
+
 const filteredKeyList = computed(() =>
   keyList.value.filter((row) => {
     if (filterKeyId.value && !String(row.keyId).includes(filterKeyId.value.trim())) {
@@ -727,6 +799,8 @@ const filteredKeyList = computed(() =>
     if (filterUsage.value && row.keyUsage !== filterUsage.value) {
       return false
     }
+    if (filterApplication.value && row.application !== filterApplication.value) return false
+    if (filterDataSource.value && (row.dataSource || '本地创建') !== filterDataSource.value) return false
     if (filterDateRange.value && filterDateRange.value.length === 2) {
       const [start, end] = filterDateRange.value.map(Number)
       if (row.addedTimeMs < start || row.addedTimeMs > end) return false
@@ -760,6 +834,8 @@ const handleReset = () => {
   filterKeyId.value = ''
   filterAlgorithm.value = ''
   filterUsage.value = ''
+  filterApplication.value = ''
+  filterDataSource.value = ''
   filterDateRange.value = null
   currentPage.value = 1
 }
@@ -823,6 +899,14 @@ const handleRecover = () => {
   ElMessage.info('恢复密钥：请选择密钥备份文件（原型演示）')
 }
 
+const handleBackupAll = () => {
+  ElMessage.info('备份所有密钥：请连接 UKEY（原型演示）')
+}
+
+const handleRecoverAll = () => {
+  ElMessage.info('恢复所有密钥：请选择密钥备份文件（原型演示）')
+}
+
 const handleDetail = (row) => {
   currentKey.value = row
   detailDialogVisible.value = true
@@ -846,27 +930,27 @@ const handleViewPassword = (row) => {
 
 .key-search-toolbar {
   background: $card-bg;
-  padding: $spacing-md;
-  margin-bottom: $spacing-sm;
+  padding: 24px 20px;
+  margin-bottom: 20px;
+  box-shadow: $box-shadow;
 }
 
 .filter-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-md $spacing-lg;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px 16px;
   align-items: center;
 }
 
 .filter-item {
   display: flex;
-  flex-wrap: nowrap;
   align-items: center;
-  gap: $spacing-xs;
+  gap: 12px;
+  min-width: 0;
 }
 
 .filter-item--range {
-  flex: 1 1 320px;
-  min-width: 280px;
+  grid-column: span 2;
 }
 
 .filter-label {
@@ -877,36 +961,110 @@ const handleViewPassword = (row) => {
 }
 
 .filter-input {
-  width: 200px;
+  flex: 1;
+  min-width: 0;
 }
 
 .filter-select {
-  width: 140px;
+  flex: 1;
+  min-width: 0;
 }
 
 .filter-daterange {
   flex: 1;
-  min-width: 180px;
-  max-width: 300px;
+  min-width: 0;
 }
 
 .filter-actions {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: $spacing-xs;
+  justify-content: flex-start;
+}
+
+.filter-actions .el-button {
+  min-width: 84px;
 }
 
 .action-bar {
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 20px 24px;
+  background: #fff;
+  margin-bottom: 0;
+}
+
+.action-bar .el-button {
+  min-width: 112px;
+  margin: 0 12px 0 0;
+}
+
+.key-table {
+  width: 100%;
+  --el-table-header-bg-color: #f5f6f8;
+  --el-table-border-color: #e9edf2;
+}
+
+.key-table :deep(th.el-table__cell) {
+  height: 52px;
+  color: #687280;
+  font-weight: 500;
+}
+
+.key-table :deep(td.el-table__cell) {
+  height: 72px;
+}
+
+.algorithm-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.algorithm-cell small {
+  font-size: 12px;
+  color: #48505b;
+}
+
+.column-help {
+  color: #7c8590;
+  margin-left: 4px;
+  vertical-align: middle;
+  cursor: help;
+}
+
+.copy-ready {
+  color: #1ab758;
+}
+
+.row-actions {
+  display: flex;
+  align-content: center;
+  flex-wrap: wrap;
+  column-gap: 10px;
+  row-gap: 2px;
+}
+
+.row-actions .el-button {
+  margin: 0;
 }
 
 .pagination {
-  margin-top: 16px;
+  padding: 16px 0;
+  background: #fff;
   display: flex;
   justify-content: flex-end;
+}
+
+@media (max-width: 1350px) {
+  .filter-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 700px) {
+  .filter-row { grid-template-columns: minmax(0, 1fr); }
+  .filter-item--range { grid-column: auto; }
+  .filter-actions { justify-content: flex-end; }
+  .action-bar { padding: 16px; }
 }
 
 .form-label-with-tag,
