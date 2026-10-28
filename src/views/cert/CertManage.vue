@@ -225,10 +225,10 @@
           <el-input v-model="externalSignForm.certName" placeholder="请输入证书名称，2-60个字符" maxlength="60" clearable />
         </el-form-item>
         <el-form-item label="证书文件" prop="fileName">
-          <el-upload action="#" :auto-upload="false" :limit="1" :on-change="onExternalCertFileChange" :on-remove="onExternalCertFileRemove" accept=".cer,.pem,.der,.p12,.pfx,.data">
+          <el-upload action="#" :auto-upload="false" :limit="1" :on-change="onExternalCertFileChange" :on-remove="onExternalCertFileRemove" accept=".p12">
             <el-button type="primary">点击上传</el-button>
           </el-upload>
-          <div class="upload-format-tip">支持 .cer, .pem, .der, .p12, .pfx, .data</div>
+          <div class="upload-format-tip">仅支持 .p12</div>
         </el-form-item>
         <el-form-item label="证书保护密码" prop="certProtectPwd">
           <el-input v-model="externalSignForm.certProtectPwd" type="password" show-password placeholder="请输入证书保护密码" autocomplete="new-password" />
@@ -293,28 +293,59 @@
       </template>
     </el-dialog>
 
-    <el-dialog class="cert-manage-dialog" v-model="signerPickerVisible" title="选择签名证书" width="980px" destroy-on-close>
+    <el-dialog class="cert-manage-dialog" v-model="signerPickerVisible" title="选择签名证书" width="1200px" destroy-on-close>
       <div class="signer-picker">
-        <el-form :inline="true" :model="signerPickerQuery" class="signer-picker-query">
+        <el-form :inline="true" :model="signerPickerQuery" class="search-form cert-search-form">
+          <el-form-item label="密钥编号">
+            <el-input v-model="signerPickerQuery.keyNumber" placeholder="请输入密钥编号" clearable />
+          </el-form-item>
           <el-form-item label="证书名称">
-            <el-input v-model="signerPickerQuery.name" placeholder="请输入证书名称" clearable />
-          </el-form-item>          <el-form-item label="证书状态">
-            <el-select v-model="signerPickerQuery.status" placeholder="请选择状态" clearable>
-              <el-option label="生效中" value="生效中" />
-              <el-option label="已过期" value="已过期" />
-              <el-option label="已吊销" value="已吊销" />
-              <el-option label="未生效" value="未生效" />
-              <el-option label="未知" value="未知" />
+            <el-input v-model="signerPickerQuery.appCertName" placeholder="请输入证书名称" clearable />
+          </el-form-item>
+          <el-form-item label="应用名称">
+            <el-input v-model="signerPickerQuery.appName" placeholder="请选择应用" clearable />
+          </el-form-item>
+          <el-form-item label="数据来源">
+            <el-select v-model="signerPickerQuery.dataSource" placeholder="请选择数据来源" clearable>
+              <el-option label="本地创建" value="本地创建" />
+              <el-option label="导入" value="导入" />
             </el-select>
           </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="signerPickerPage = 1">查询</el-button>
-            <el-button @click="resetSignerPickerQuery">重置</el-button>
-          </el-form-item>
+          <template v-if="signerPickerExpanded">
+            <el-form-item label="证书类型">
+              <el-select v-model="signerPickerQuery.certType" placeholder="请选择证书类型" clearable>
+                <el-option label="签名证书" value="签名证书" />
+                <el-option label="双证书" value="双证书" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="加密证书关联">
+              <el-select v-model="signerPickerQuery.hasEncryption" placeholder="请选择关联状态" clearable>
+                <el-option label="已关联" value="yes" />
+                <el-option label="未关联" value="no" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="证书状态">
+              <el-select v-model="signerPickerQuery.status" placeholder="请选择证书状态" clearable>
+                <el-option label="生效中" value="生效中" />
+                <el-option label="已过期" value="已过期" />
+                <el-option label="已吊销" value="已吊销" />
+                <el-option label="未生效" value="未生效" />
+                <el-option label="未知" value="未知" />
+              </el-select>
+            </el-form-item>
+          </template>
         </el-form>
+        <div class="cert-search-actions signer-picker-actions">
+          <el-button type="primary" @click="signerPickerPage = 1">查询</el-button>
+          <el-button @click="resetSignerPickerQuery">重置</el-button>
+          <el-button link type="primary" @click="signerPickerExpanded = !signerPickerExpanded">
+            {{ signerPickerExpanded ? '收起' : '展开' }}<el-icon><ArrowDown /></el-icon>
+          </el-button>
+        </div>
         <el-table
           :data="pagedSignerPickerRows"
           height="430"
+          class="signer-picker-table"
           highlight-current-row
           :row-class-name="signerPickerRowClassName"
           @row-click="selectSignerPickerRow"
@@ -326,25 +357,43 @@
               </el-radio>
             </template>
           </el-table-column>
-          <el-table-column prop="appCertName" label="证书名称" min-width="180" show-overflow-tooltip />
+          <el-table-column label="证书名称/密钥编号" min-width="200" show-overflow-tooltip>
+            <template #default="{ row }">
+              <div class="name-key-cell">
+                <span class="primary-line">{{ row.appCertName }}</span>
+                <span class="sub-line">{{ row.keyNumber || row.keyId || (row.keyIndex ? `索引 ${row.keyIndex}` : '—') }}</span>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="数据来源" width="110">
+            <template #default="{ row }">{{ row.dataSource || '本地创建' }}</template>
+          </el-table-column>
+          <el-table-column label="应用名称" min-width="130" show-overflow-tooltip>
+            <template #default="{ row }">{{ row.appName || row.appId || '—' }}</template>
+          </el-table-column>
+          <el-table-column label="算法类型" width="118" show-overflow-tooltip>
+            <template #default="{ row }">{{ row.algorithmDisplay || row.algorithm }}</template>
+          </el-table-column>
+          <el-table-column label="颁发者" min-width="200" show-overflow-tooltip>
+            <template #default="{ row }">{{ row.issuer || '—' }}</template>
+          </el-table-column>
           <el-table-column label="证书主题" min-width="220" show-overflow-tooltip>
             <template #default="{ row }">{{ row.subjectDn || '—' }}</template>
           </el-table-column>
-          <el-table-column label="算法" width="110">
-            <template #default="{ row }">{{ row.algorithmDisplay || row.algorithm || '—' }}</template>
+          <el-table-column prop="serialNumber" label="证书序列号" width="120" show-overflow-tooltip />
+          <el-table-column label="证书类型" width="130" show-overflow-tooltip>
+            <template #default="{ row }">{{ row.certType || row.category || '—' }}</template>
           </el-table-column>
-          <el-table-column prop="serialNumber" label="序列号" width="150" show-overflow-tooltip />
-          <el-table-column prop="keyIndex" label="密钥索引" width="100" />
-          <el-table-column label="状态" width="110">
+          <el-table-column label="证书状态" width="168" align="center" show-overflow-tooltip>
             <template #default="{ row }">
               <span class="cert-status-live" :class="getStatusClass(row.status)">
-                <span class="cert-status-dot" />{{ row.status }}
+                <span class="cert-status-dot" aria-hidden="true" />{{ row.status || '未知' }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column label="有效期" width="220">
-            <template #default="{ row }">{{ row.notBefore || '—' }} 至 {{ row.notAfter || '—' }}</template>
-          </el-table-column>
+          <el-table-column label="创建时间" prop="createdAt" width="168" align="center" />
+          <el-table-column prop="notBefore" label="生效时间" width="168" align="center" />
+          <el-table-column prop="notAfter" label="到期时间" width="168" align="center" />
         </el-table>
         <div class="signer-picker-footer">
           <span>已选 {{ signerPickerSelectedId ? 1 : 0 }} 条数据</span>
@@ -797,11 +846,30 @@ const signerPickerVisible = ref(false)
 const signerPickerPage = ref(1)
 const signerPickerPageSize = ref(10)
 const signerPickerSelectedId = ref('')
-const signerPickerQuery = reactive({ name: '', status: '' })
+const signerPickerExpanded = ref(false)
+const signerPickerQuery = reactive({
+  keyNumber: '',
+  appCertName: '',
+  appName: '',
+  dataSource: '',
+  certType: '',
+  status: '',
+  hasEncryption: ''
+})
 
 const filteredSignerPickerRows = computed(() => eligibleSigners.value.filter((row) => {
-  if (signerPickerQuery.name && !String(row.appCertName || '').includes(signerPickerQuery.name.trim())) return false
-  if (signerPickerQuery.status && row.status !== signerPickerQuery.status) return false
+  if (signerPickerQuery.keyNumber && !String(row.keyNumber || row.keyId || row.keyIndex || '').includes(signerPickerQuery.keyNumber.trim())) return false
+  if (signerPickerQuery.appCertName) {
+    const query = signerPickerQuery.appCertName.trim()
+    const name = String(row.appCertName || '')
+    const keyNumber = String(row.keyNumber || row.keyId || row.keyIndex || '')
+    if (!name.includes(query) && !keyNumber.includes(query)) return false
+  }
+  if (signerPickerQuery.appName && !String(row.appName || row.appId || '').includes(signerPickerQuery.appName.trim())) return false
+  if (signerPickerQuery.dataSource && String(row.dataSource || '本地创建') !== signerPickerQuery.dataSource) return false
+  if (signerPickerQuery.certType && String(row.certType || row.category || '签名证书') !== signerPickerQuery.certType) return false
+  if (signerPickerQuery.hasEncryption && String(!!row.encryptionCert) !== String(signerPickerQuery.hasEncryption === 'yes')) return false
+  if (signerPickerQuery.status && String(row.status || '') !== signerPickerQuery.status) return false
   return true
 }))
 
@@ -816,6 +884,8 @@ const signerPickerRowClassName = ({ row }) =>
 const openSignerPicker = () => {
   signerPickerSelectedId.value = importEncryptForm.signerId || ''
   signerPickerPage.value = 1
+  signerPickerExpanded.value = false
+  resetSignerPickerQuery()
   signerPickerVisible.value = true
 }
 
@@ -830,8 +900,15 @@ const confirmSignerPicker = () => {
 }
 
 const resetSignerPickerQuery = () => {
-  signerPickerQuery.name = ''
-  signerPickerQuery.status = ''
+  Object.assign(signerPickerQuery, {
+    keyNumber: '',
+    appCertName: '',
+    appName: '',
+    dataSource: '',
+    certType: '',
+    status: '',
+    hasEncryption: ''
+  })
   signerPickerPage.value = 1
 }
 
