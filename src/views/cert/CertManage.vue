@@ -228,7 +228,7 @@
           <el-upload action="#" :auto-upload="false" :limit="1" :on-change="onExternalCertFileChange" :on-remove="onExternalCertFileRemove" accept=".p12">
             <el-button type="primary">点击上传</el-button>
           </el-upload>
-          <div class="upload-format-tip">仅支持 .p12</div>
+          <div class="upload-format-tip p12-format-tip">仅支持 .p12</div>
         </el-form-item>
         <el-form-item label="证书保护密码" prop="certProtectPwd">
           <el-input v-model="externalSignForm.certProtectPwd" type="password" show-password placeholder="请输入证书保护密码" autocomplete="new-password" />
@@ -281,7 +281,7 @@
             :limit="1"
             :on-change="onEncryptPrivateKeyFileChange"
             :on-remove="onEncryptPrivateKeyFileRemove"
-            accept=".pem,.key,.data,.zip"
+            accept=".pem,.key,.data,.zip,.b64,.txt"
           >
             <el-button type="primary">点击上传</el-button>
           </el-upload>
@@ -1884,6 +1884,13 @@ const removeApplyRow = (row) => {
 }
 
 .encrypt-cert-upload {
+.p12-format-tip {
+  flex: 0 0 100%;
+  width: 100%;
+  margin: 8px 0 0 0 !important;
+  line-height: 1.4;
+}
+
 .upload-format-tip {
   margin-top: 6px;
   color: $text-secondary;
