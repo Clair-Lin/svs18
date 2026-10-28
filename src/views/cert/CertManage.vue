@@ -532,8 +532,11 @@
       <template #footer>
         <el-button @click="updateCertVisible = false">取消</el-button>
         <el-popover v-model:visible="updateConfirmVisible" placement="top-end" :width="430" trigger="click" popper-class="cert-manage-popover">
-          <p class="update-cert-warning">
-            本次仅更新签名证书，不会更新关联的加密证书。如需更新加密证书，请单独更新加密证书并重新导入。应用证书更新后，原签名证书将被删除，无法再使用原证书进行数字签名。确定要更新吗？
+                    <p class="update-cert-warning">
+            本次仅更新签名证书，不会更新关联的加密证书。<br />
+            如需更新加密证书，请单独更新加密证书并重新导入。<br />
+            应用证书更新后，原签名证书将被删除，无法再使用原证书进行数字签名。<br />
+            确定要更新吗？
           </p>
           <div class="update-cert-warning-actions">
             <el-button type="primary" @click="openUpdateAuth">确认更新</el-button>
