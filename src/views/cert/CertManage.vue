@@ -175,7 +175,11 @@
             <el-button @click="refreshApplyList">刷新</el-button>
           </div>
           <el-table :data="pagedApplyList" border>
-            <el-table-column prop="certName" label="证书名称" min-width="190" show-overflow-tooltip />
+                        <el-table-column label="证书名称" min-width="190" show-overflow-tooltip>
+              <template #default="{ row }">
+                {{ row.certName }}<span v-if="row.replaceCertId">（更新）</span>
+              </template>
+            </el-table-column>
             <el-table-column label="数据来源" width="120">
               <template #default="{ row }">{{ row.dataSource || '本地创建' }}</template>
             </el-table-column>
@@ -470,7 +474,10 @@
     <el-dialog class="cert-manage-dialog" v-model="importApplyCertVisible" title="导入证书" width="520px" destroy-on-close>
       <el-form ref="importApplyFormRef" :model="importApplyForm" :rules="importApplyRules" label-width="120px">
         <el-form-item label="申请记录">
-          <span class="text-secondary">{{ importApplyTarget?.subjectDn || '—' }}</span>
+                    <div class="apply-import-target">
+            <div>{{ importApplyTarget?.certName }}<span v-if="importApplyTarget?.replaceCertId">（更新）</span></div>
+            <div class="text-secondary">{{ importApplyTarget?.subjectDn || '—' }}</div>
+          </div>
         </el-form-item>
         <el-form-item label="证书文件" prop="fileName">
           <el-upload
@@ -1027,6 +1034,7 @@ const submitImportExternalSign = () => {
       subjectDn: '—',
       subject: '—',
       serialNumber: '—',
+      certificatePem: '',
       certType: '签名证书',
       category: '签名证书',
       version: '—',
@@ -1140,6 +1148,7 @@ const submitImportEncrypt = () => {
       subjectDn: signer.subjectDn,
       subject: signer.subjectDn,
       serialNumber: previousCert?.serialNumber || '—',
+      certificatePem: '',
       status: previousCert?.status || '生效中',
       notBefore: previousCert?.notBefore || '—',
       notAfter: previousCert?.notAfter || '—'
@@ -1192,19 +1201,39 @@ const confirmUpdateAuth = () => {
     return
   }
   if (!updateCert.value) return
+  const subjectDn = updateCertSubject.value.trim()
+  if (!subjectDn) {
+    ElMessage.warning('请输入新的证书主题')
+    return
+  }
+
   updateAuthSubmitting.value = true
   setTimeout(() => {
-    updateCert.value.subjectDn = updateCertSubject.value.trim()
-    updateCert.value.subject = updateCertSubject.value.trim()
+    const sourceCert = updateCert.value
+    applyList.value.unshift({
+      id: `a_update_${Date.now()}`,
+      certName: sourceCert.appCertName,
+      subjectDn,
+      appId: sourceCert.appId || '',
+      appName: sourceCert.appName || '',
+      algorithm: sourceCert.algorithm,
+      algorithmDisplay: sourceCert.algorithmDisplay || certAlgorithmDisplay(sourceCert.algorithm),
+      keyIndex: sourceCert.keyIndex,
+      applyStatus: '未签发',
+      applyTime: formatNow(),
+      dataSource: '本地创建',
+      replaceCertId: sourceCert.id
+    })
     updateAuthSubmitting.value = false
     updateAuthVisible.value = false
     updateConfirmVisible.value = false
     updateCertVisible.value = false
     updateAdminPassword.value = ''
-    ElMessage.success('应用证书已更新（原型演示）')
+    applyPage.value = 1
+    pageTab.value = 'apply'
+    ElMessage.success('更新申请已生成，请下载 CSR 并提交 CA 签发')
   }, 500)
 }
-
 const handleCertExport = (row) => {
   exportCert.value = row
   exportCertType.value = ''
@@ -1440,42 +1469,83 @@ const submitImportApplyCert = () => {
   importApplyFormRef.value?.validate((valid) => {
     if (!valid || !importApplyTarget.value) return
     const request = importApplyTarget.value
-    allCerts.value.unshift({
-      id: `cert-import-${Date.now()}`,
-      appId: request.appId || '',
-      createdAt: formatNow(),
+    const replacement = request.replaceCertId
+      ? allCerts.value.find((row) => row.id === request.replaceCertId)
+      : null
+
+    if (request.replaceCertId && !replacement) {
+      ElMessage.error('原签名证书已不存在，无法完成更新')
+      return
+    }
+
+    const importedFields = {
       appName: request.appName || '',
-      appCertName: request.certName,
-      keyIndex: request.keyIndex,
       algorithm: request.algorithm,
-      algorithmDisplay: String(request.algorithm || '').toUpperCase(),
-      issuer: '—',
+      algorithmDisplay: request.algorithmDisplay || String(request.algorithm || '').toUpperCase(),
       subjectDn: request.subjectDn,
       subject: request.subjectDn,
       serialNumber: '—',
-      certType: '签名证书',
-      category: '签名证书',
+      certificatePem: '',
       version: '—',
       status: '生效中',
       notBefore: '—',
       notAfter: '—',
       dataSource: '导入',
-      sourceApplyId: request.id,
-    })
+      sourceApplyId: request.id
+    }
+
+    if (replacement) {
+      Object.assign(replacement, importedFields, {
+        appCertName: replacement.appCertName,
+        keyIndex: request.keyIndex
+      })
+    } else {
+      allCerts.value.unshift({
+        id: `cert-import-${Date.now()}`,
+        appId: request.appId || '',
+        createdAt: formatNow(),
+        appCertName: request.certName,
+        keyIndex: request.keyIndex,
+        certType: '签名证书',
+        category: '签名证书',
+        ...importedFields
+      })
+    }
+
     applyList.value = applyList.value.filter((row) => row.id !== request.id)
     applyPage.value = 1
     certPage.value = 1
     pageTab.value = 'cert'
     importApplyCertVisible.value = false
     importApplyTarget.value = null
-    ElMessage.success('签名证书已导入，已转入证书管理（原型演示）')
+    ElMessage.success(replacement ? '签名证书已更新（原型演示）' : '签名证书已导入，已转入证书管理（原型演示）')
   })
 }
-
 const downloadApplyCsr = (row) => {
-  ElMessage.info(`已模拟下载 CSR：${row.certName || row.id}（原型演示）`)
+  const request = JSON.stringify({
+    requestId: row.id,
+    certificateName: row.certName,
+    subjectDn: row.subjectDn,
+    algorithm: row.algorithm,
+    keyIndex: row.keyIndex,
+    mock: true
+  })
+  const bytes = new TextEncoder().encode(request)
+  let binary = ''
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte) })
+  const encoded = btoa(binary).match(/.{1,64}/g)?.join('\n') || ''
+  const csrMock = `-----BEGIN CERTIFICATE REQUEST-----\n${encoded}\n-----END CERTIFICATE REQUEST-----\n`
+  const baseName = String(row.certName || row.id).replace(/[^a-zA-Z0-9_.-]/g, '_')
+  const downloadUrl = URL.createObjectURL(new Blob([csrMock], { type: 'application/pkcs10' }))
+  const anchor = document.createElement('a')
+  anchor.href = downloadUrl
+  anchor.download = `${baseName}.csr`
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 0)
+  ElMessage.success('CSR mock 文件已下载；实际提交 CA 前需使用真实密钥生成 CSR')
 }
-
 const removeApplyRow = (row) => {
   ElMessageBox.confirm('确定删除该证书申请记录吗？', '提示', {
     type: 'warning',
