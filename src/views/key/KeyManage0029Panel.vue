@@ -384,6 +384,7 @@ import { ref, reactive, computed, inject, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { QuestionFilled } from '@element-plus/icons-vue'
 import { PQC_KEY_OPTIONS } from '@/constants/pqc.js'
+import { registerGeneratedKeyUsage } from '@/composables/keyUsageRegistry.js'
 import { KEY_MANAGE_SECURITY_KEY } from './keyManageSecurityKey.js'
 
 /** 密钥类型（下拉分组选项值） */
@@ -875,13 +876,16 @@ async function handleCreateKey () {
   setTimeout(() => {
     const now = Date.now()
     const addedTime = formatNow()
+    let createdRow
     if (isIbcKeyType.value) {
-      keyList.value.unshift(buildIbcKeyRow(now, addedTime))
+      createdRow = buildIbcKeyRow(now, addedTime)
     } else if (isPqcKeyType.value) {
-      keyList.value.unshift(buildPqcKeyRow(now, addedTime))
+      createdRow = buildPqcKeyRow(now, addedTime)
     } else {
-      keyList.value.unshift(buildPkiKeyRow(now, addedTime))
+      createdRow = buildPkiKeyRow(now, addedTime)
     }
+    keyList.value.unshift(createdRow)
+    registerGeneratedKeyUsage(createdRow)
     creating.value = false
     createDialogVisible.value = false
     keyForm.password = ''

@@ -447,7 +447,7 @@
               :key="key.index"
               :label="`${key.index}（${key.algorithm.toUpperCase()}）`"
               :value="key.index"
-              :disabled="normalizeCertAlgorithm(key.algorithm) !== normalizeCertAlgorithm(applyCertForm.algorithm)"
+              :disabled="!key.canIssueCsr || normalizeCertAlgorithm(key.algorithm) !== normalizeCertAlgorithm(applyCertForm.algorithm)"
             />
           </el-select>
         </el-form-item>
@@ -640,6 +640,7 @@ import { useCertManagePool } from '@/composables/useCertManagePool'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, CircleClose, CircleCheck, ArrowDown, ArrowRight } from '@element-plus/icons-vue'
 import { PQC_KEY_OPTIONS } from '@/constants/pqc.js'
+import { generatedKeyUsageRegistry } from '@/composables/keyUsageRegistry.js'
 
 const pad2 = (n) => String(n).padStart(2, '0')
 const formatNow = () => {
@@ -723,7 +724,7 @@ const applyCertForm = reactive({
 })
 
 
-const signingKeyOptions = [
+const baseSigningKeyOptions = [
   { index: 689, algorithm: 'sm2' },
   { index: 690, algorithm: 'rsa' },
   { index: 101, algorithm: 'sm2' },
@@ -735,6 +736,22 @@ const signingKeyOptions = [
     .map(({ value }, index) => ({ index: 700 + index, algorithm: value }))
 ]
 
+const hasDualKeyUsage = (keyUsage) => {
+  const usages = Array.isArray(keyUsage)
+    ? keyUsage
+    : String(keyUsage || '').split(/[、,，\s]+/)
+  return usages.includes('签名验签') && usages.includes('加密解密')
+}
+
+const signingKeyOptions = computed(() => {
+  const generated = Object.values(generatedKeyUsageRegistry)
+  const generatedByIndex = new Map(generated.map((key) => [Number(key.index), key]))
+  const options = [
+    ...baseSigningKeyOptions.filter((key) => !generatedByIndex.has(Number(key.index))),
+    ...generated
+  ]
+  return options.map((key) => ({ ...key, canIssueCsr: !hasDualKeyUsage(key.keyUsage) })).filter((key) => key.canIssueCsr)
+})
 const normalizeCertAlgorithm = (algorithm) => String(algorithm || '').toLowerCase()
 
 const isPqcCertAlgorithm = (algorithm) =>
@@ -1489,15 +1506,25 @@ const openApplyCertDialog = () => {
 }
 
 const onApplyAlgorithmChange = (algorithm) => {
-  const selectedKey = signingKeyOptions.find((key) => normalizeCertAlgorithm(key.algorithm) === normalizeCertAlgorithm(algorithm))
-  if (selectedKey && !signingKeyOptions.some((key) => key.index === applyCertForm.keyIndex && normalizeCertAlgorithm(key.algorithm) === normalizeCertAlgorithm(algorithm))) {
+  const selectedKey = signingKeyOptions.value.find((key) => normalizeCertAlgorithm(key.algorithm) === normalizeCertAlgorithm(algorithm))
+  if (!selectedKey) {
+    applyCertForm.keyIndex = null
+    ElMessage.warning('当前算法没有可用于 CSR 的签名密钥，请生成仅用于签名验签的密钥')
+    return
+  }
+  if (!signingKeyOptions.value.some((key) => key.index === applyCertForm.keyIndex && normalizeCertAlgorithm(key.algorithm) === normalizeCertAlgorithm(algorithm))) {
     applyCertForm.keyIndex = selectedKey.index
   }
 }
-
 const submitApplyCert = () => {
   applyCertFormRef.value?.validate((valid) => {
     if (!valid) return
+    const registeredKey = generatedKeyUsageRegistry[applyCertForm.keyIndex]
+    if (registeredKey && hasDualKeyUsage(registeredKey.keyUsage)) {
+      ElMessage.error('双用途密钥不允许申请 CSR，请选择仅用于签名验签的密钥')
+      return
+    }
+
     applyCertSubmitting.value = true
     const subjectDn =
       applyCertForm.useCustomSubject === 'yes'
@@ -1523,7 +1550,6 @@ const submitApplyCert = () => {
     }, 280)
   })
 }
-
 const openImportApplyCert = (row) => {
   importApplyTarget.value = row
   importApplyForm.fileName = ''
